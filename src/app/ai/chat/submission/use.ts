@@ -11,13 +11,13 @@ import {
   deleteMessageAttachments,
   setMessageAttachments
 } from '@/app/ai/attachment/presentation/store'
-import { appendSkillContext } from '@/app/ai/chat/context'
 import { setVisibleMessageText } from '@/app/ai/chat/presentation'
 import { commandsAsText } from '@/app/ai/chat/references/command'
 import { mentionedNodes } from '@/app/ai/chat/references/nodes'
 import { reportSubmissionError, type SubmissionErrorOptions } from '@/app/ai/chat/submission/errors'
 import { imageFiles } from '@/app/ai/chat/submission/files'
 import { prepareSubmittedImages } from '@/app/ai/chat/submission/images'
+import { modelRequestText } from '@/app/ai/chat/submission/request'
 import { chatToResend } from '@/app/ai/chat/submission/resend'
 import { sendText } from '@/app/ai/chat/submission/text'
 import type { ChatInstance, ChatSubmission } from '@/app/ai/chat/submission/types'
@@ -154,7 +154,8 @@ export function useChatSubmission(options: SubmissionOptions) {
         return false
       }
       const note = undone.note(submission.modelText, currentChat.messages)
-      const noted = { ...submission, modelText: appendSkillContext(note.text, skill) }
+      const noted = { ...submission, modelText: modelRequestText(note.text, skill) }
+
       await options.prepare?.(currentChat, noted.modelText)
       if (version !== operationVersion) return false
       const previousIds = new Set(currentChat.messages.map((message) => message.id))
@@ -227,7 +228,7 @@ export function useChatSubmission(options: SubmissionOptions) {
     try {
       await withTurn(currentChat, () =>
         currentChat
-          .sendMessage({ messageId, text: appendSkillContext(note.text, skill) })
+          .sendMessage({ messageId, text: modelRequestText(note.text, skill) })
           .catch(() => undefined)
       )
       undone.reported(currentChat, note.reports, messageId)
