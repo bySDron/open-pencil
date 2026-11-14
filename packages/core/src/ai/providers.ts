@@ -7,6 +7,7 @@ export type ACPAgentID =
   | 'antigravity'
   | 'cursor'
   | 'grok-build'
+  | 'dsh'
 
 export interface ACPAgentDef {
   id: ACPAgentID
@@ -104,6 +105,15 @@ export const ACP_AGENTS: ACPAgentDef[] = [
     command: 'grok',
     args: ['agent', 'stdio'],
     setupURL: 'https://docs.x.ai/build/overview'
+  },
+  {
+    id: 'dsh',
+    name: 'DeepSeek Harness',
+    // DSH serves ACP from one of its own profiles, so the app starts the person's own harness,
+    // with the providers and models they already connected there, and no adapter stands between.
+    command: 'dsh',
+    args: ['--profile', 'acp'],
+    cliCommand: 'dsh'
   }
 ]
 

@@ -1,6 +1,6 @@
 import dedent from 'dedent'
 
-import { ACP_AGENTS, type ACPAgentID } from '@open-pencil/core/constants'
+import { ACP_AGENTS, type ACPAgentDef, type ACPAgentID } from '@open-pencil/core/constants'
 
 import { MCP_INSTALL_COMMAND } from '@/app/automation/mcp/failure'
 import { detectUserAgent } from '@/app/tauri/command'
@@ -16,7 +16,18 @@ const SIGN_IN: Record<ACPAgentID, string> = {
   antigravity:
     'Make sure I am signed in to Antigravity CLI: run `agy` and choose a sign-in method.',
   cursor: 'Make sure I am signed in to Cursor: run `cursor-agent login` if I am not.',
-  'grok-build': 'Make sure I am signed in to Grok Build: run `grok login` if I am not.'
+  'grok-build': 'Make sure I am signed in to Grok Build: run `grok login` if I am not.',
+  dsh: 'Make sure DeepSeek Harness reaches a model: open its app, connect a provider in Settings, and run one task there.'
+}
+
+/**
+ * How an agent without an npm package is installed: from its own setup page, or — for an agent
+ * that ships none, as DSH does — the way its own documentation describes.
+ */
+function installFromPage(agent: ACPAgentDef): string {
+  return agent.setupURL
+    ? `install ${agent.name} from ${agent.setupURL}`
+    : `install ${agent.name} the way its own documentation describes`
 }
 
 export function codingAgentGuideURL(agentID: ACPAgentID): string {
@@ -34,10 +45,7 @@ export function codingAgentSetupPrompt(
   const agent = ACP_AGENTS.find((candidate) => candidate.id === agentID)
   if (!agent) return ''
   const command = agentInstallCommand(agent, userAgent.includes('Windows'))
-  // An agent without an npm package installs from its own setup page.
-  const install = command
-    ? `install it: \`${command}\``
-    : `install ${agent.name} from ${agent.setupURL}`
+  const install = command ? `install it: \`${command}\`` : installFromPage(agent)
   return dedent`
     Help me connect ${agent.name} to OpenPencil, an open-source design editor. OpenPencil starts ${agent.name} through the Agent Client Protocol and gives it canvas tools through OpenPencil's local MCP server, so both need to be installed on this computer.
 
