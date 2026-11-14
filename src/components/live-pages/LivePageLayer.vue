@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventListener, useElementSize } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 import { resolveEditorProfile, type EditorProfileInputs, type EditorState } from '@open-pencil/core'
 import type { ViewportTransform } from '@open-pencil/core/geometry'
@@ -161,17 +161,19 @@ const visibility = computed(() =>
 )
 
 /**
- * The one screen that runs its own application: the one a person is working on.
- *
- * Every other screen is its picture, drawn by the canvas instead of by a browser of its own. A page
- * is a whole application - scripts, memory, layout, paint - and a canvas that keeps a page per
- * screen pays for it on every pan and every zoom. One live page is the price of working on a
- * screen; a picture is what looking at one costs.
+ * The screens that run: every screen that has once come near the view. A page is never taken down
+ * again - its state, its scroll position and its open panels are what a person comes back to - so
+ * the only thing the canvas decides is whether a running page is drawn.
  */
-const focusedId = computed(() => {
-  const [first] = store.state.selectedIds
-  return first ?? null
-})
+const mounted = reactive(new Set<string>())
+
+watch(
+  visibility,
+  (now) => {
+    for (const nodeId of now.running) mounted.add(nodeId)
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -191,8 +193,8 @@ const focusedId = computed(() => {
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
         :picking="isPicking"
-        :running="entry.nodeId === focusedId"
-        :watched="visibility.shown.has(entry.nodeId)"
+        :running="mounted.has(entry.nodeId)"
+        :parked="!visibility.shown.has(entry.nodeId)"
       />
     </div>
   </div>

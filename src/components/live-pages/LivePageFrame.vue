@@ -6,17 +6,17 @@ import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/i
 import { pickedElement } from '@/app/live-pages/pick'
 import type { PagePlacement } from '@/app/live-pages/placement'
 import type { LivePage } from '@/app/live-pages/schema'
-import { useScreenThumbnails } from '@/app/live-pages/thumbnails'
 import { useLivePages } from '@/app/live-pages/use'
 
 /**
  * One page of the running application, drawn over the canvas: the frame's own layers stay under
  * it, so a design can be laid on top of the page it replaces.
  *
- * A page is the real application, and the canvas decides how much of it costs anything. One screen
- * runs: the one a person is working on. Every other screen is the picture the list keeps of it, so a
- * canvas of twenty screens is one application and twenty images, and panning or zooming touches no
- * page at all - which is the whole of what makes an infinite canvas of screens usable.
+ * The page is always the real application, never a picture of it. What makes a canvas of twenty of
+ * them affordable is the parking the GPU canvas uses for its own nodes: a page outside the view is
+ * still running - its scripts, its state, its scroll position - but it is not drawn, so the canvas
+ * pays nothing for it per frame. A page that comes back into the view is drawn again at once, live,
+ * exactly as it was.
  *
  * The page is inspected from inside: a script the window injects into every frame answers over
  * `postMessage`, which is the only way a page of another origin can be read at all. This component
@@ -29,7 +29,7 @@ const {
   interactive,
   picking = false,
   running = true,
-  watched = true,
+  parked = false,
   nodeId
 } = defineProps<{
   page: LivePage
@@ -40,48 +40,29 @@ const {
   interactive: boolean
   /** Whether a click on this page picks the element under it instead of reaching the page. */
   picking?: boolean
-  /** Whether the page runs at all, or the canvas draws the picture of it. */
+  /** Whether the page runs at all, which is from the moment it first came near the view. */
   running?: boolean
-  /** Whether this screen is in the view, which is when its picture is worth taking. */
-  watched?: boolean
+  /** Whether the page is out of sight, and so left undrawn while it keeps running. */
+  parked?: boolean
   /** The frame this page draws on, which the layer reads back to name the frame that posted. */
   nodeId: string
 }>()
 
-const thumbnails = useScreenThumbnails()
 const { setMode } = useLivePages()
 
 const frame = ref<HTMLIFrameElement | null>(null)
 
-/** Whether this screen runs its own application here, which is the one screen a person works on. */
+/** Whether this screen runs its own application here. */
 const runs = computed(() => page.mode === 'live' && running)
-
-/** The picture of a screen that is not running, taken by the machine's own browser. */
-const picture = computed(() => thumbnails.thumbnailOf(page.url)?.src ?? null)
 
 /** Announce the window this frame draws, so requests have somewhere to go. */
 function register(): void {
   registerPageFrame(nodeId, frame.value?.contentWindow ?? null)
 }
 
-/** Ask for the picture a screen is covered by while the view moves, or when it does not run. */
-function askForPicture(): void {
-  if (watched) thumbnails.request(page.url)
-}
-
 onMounted(() => {
-  askForPicture()
   if (runs.value) register()
 })
-
-// A screen that comes into the view gets its picture taken, which is what the canvas draws in
-// place of the application itself.
-watch(
-  () => watched,
-  (on) => {
-    if (on) askForPicture()
-  }
-)
 
 onBeforeUnmount(() => {
   registerPageFrame(nodeId, null)
@@ -100,25 +81,22 @@ function announce(): void {
   }
 }
 
-// A page that comes back into the view is a window of its own again from the moment it is drawn,
-// which is the moment a picked element inside it can be found.
+// A page that starts running has a window of its own from the moment it is drawn, which is the
+// moment a picked element inside it can be found again.
 watch(runs, async (on) => {
   if (on) {
     await nextTick()
     announce()
     return
   }
-  // A screen that does not run keeps no window and no layer list: its picture stands for it.
   registerPageFrame(nodeId, null)
   clearPageTree(nodeId)
-  askForPicture()
 })
 
 watch(
   () => picking,
   (on) => {
-    // An element is picked inside the page itself: a screen drawn as a picture runs first, since a
-    // picture has no elements to pick.
+    // An element is picked inside the page itself: a screen that does not run yet runs first.
     if (on && !runs.value) {
       setMode(nodeId, 'live')
       return
@@ -127,19 +105,11 @@ watch(
   }
 )
 
-// A page that moved to another address is another page, and its picture is of the one it left.
-watch(
-  () => page.url,
-  () => {
-    askForPicture()
-  }
-)
-
-// A reloaded page is a different page: the picture the list kept of it was of the old one.
+// A reloaded page is a different page: whatever the panel kept of it was of the old one.
 watch(
   () => revision,
   () => {
-    thumbnails.forget(page.url)
+    clearPageTree(nodeId)
   }
 )
 </script>
@@ -152,7 +122,9 @@ watch(
       left: `${placement.left}px`,
       top: `${placement.top}px`,
       width: `${placement.width}px`,
-      height: `${placement.height}px`
+      height: `${placement.height}px`,
+      // A page out of sight is parked: its layout stays, its paint is skipped, and it keeps running.
+      contentVisibility: parked ? 'hidden' : undefined
     }"
     data-test-id="live-page-frame"
   >
@@ -170,14 +142,5 @@ watch(
       data-test-id="live-page-iframe"
       @load="announce"
     />
-    <img
-      v-else-if="picture !== null"
-      :src="picture"
-      :alt="page.label ?? page.url"
-      class="absolute inset-0 size-full select-none object-cover object-top"
-      draggable="false"
-      data-test-id="live-page-picture"
-    />
-    <div v-else class="size-full bg-white" data-test-id="live-page-picture-empty" />
   </div>
 </template>
