@@ -95,6 +95,29 @@ export interface AgentTurnUsage {
   cacheWriteTokens: number | null
 }
 
+/** A picture of a message, as the agent's session receives it: bytes and their media type. */
+type ImagePromptBlock = { type: 'image'; data: string; mimeType: string }
+
+/** A data URL's header, which carries the media type and the base64 marker before the bytes. */
+const DATA_URL = /^data:([^;,]+);base64,/
+
+/**
+ * The pictures of a message, as prompt content blocks. A picture is attached to a message as a
+ * data URL, which is what a chat holds; the agent takes the bytes and their media type instead.
+ */
+export function imagePromptBlocks(parts: UIMessage['parts']): ImagePromptBlock[] {
+  const blocks: ImagePromptBlock[] = []
+  for (const part of parts) {
+    if (part.type !== 'file') continue
+    const mediaType = part.mediaType
+    if (!mediaType.startsWith('image/')) continue
+    const header = DATA_URL.exec(part.url)
+    if (header === null) continue
+    blocks.push({ type: 'image', data: part.url.slice(header[0].length), mimeType: mediaType })
+  }
+  return blocks
+}
+
 /**
  * The agents report fresh input apart from cache reads and writes; the chat's other models count
  * all of it as input, with the cached part broken out.
@@ -273,6 +296,9 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
     const carriesContext = !this.sentContext
     const promptText = carriesContext ? `${SYSTEM_PROMPT}\n\n${text}` : text
     this.sentContext = true
+    // A picture travels as a content block of the prompt itself: the agent hands it to the model
+    // that session runs, and no description of it stands between the two.
+    const images = imagePromptBlocks(lastUserMessage?.parts ?? [])
 
     const { connection, sessionId } = this.session
     const session = this.session
@@ -322,7 +348,7 @@ export class ACPChatTransport implements ChatTransport<UIMessage> {
         connection
           .prompt({
             sessionId,
-            prompt: [{ type: 'text', text: promptText }]
+            prompt: [{ type: 'text', text: promptText }, ...images]
           })
           // The prompt answers once the agent's turn is over; nothing else ends the reply.
           .then((result) => {

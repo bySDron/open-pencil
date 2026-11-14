@@ -49,21 +49,26 @@ export function nativeProjectRunnerEvents(): ProjectRunnerEvents {
   }
 }
 
-/** The run of one project, kept outside the screen so leaving its tab does not lose it. */
-type ProjectRun = {
+/**
+ * The run of one project, kept outside the screen so leaving its tab does not lose it: the panels
+ * that start the application and the project's own screen all read the same run.
+ */
+export type ProjectRun = {
   state: Ref<ProjectRunState>
   output: Ref<string[]>
   exitCode: Ref<number | null>
   failure: ShallowRef<string | null>
-  detach: () => void
 }
 
-const runs = new Map<string, ProjectRun>()
+/** A run with the listeners it holds, which only the module that bound them may drop. */
+type RunSlot = ProjectRun & { detach: () => void }
 
-function runOf(id: string): ProjectRun {
+const runs = new Map<string, RunSlot>()
+
+function slotOf(id: string): RunSlot {
   const existing = runs.get(id)
   if (existing) return existing
-  const run: ProjectRun = {
+  const run: RunSlot = {
     state: ref('idle'),
     output: ref([]),
     exitCode: ref(null),
@@ -74,6 +79,17 @@ function runOf(id: string): ProjectRun {
   return run
 }
 
+/**
+ * The run of one project, as anything outside the project's own screen reads it. A panel that
+ * starts an application for its screens watches the run the project screen would show, so two
+ * callers never start two applications. The listeners a run holds stay with the module that bound
+ * them, so a run is handed out by its four readable values rather than whole.
+ */
+export function projectRun(id: string): ProjectRun {
+  const slot = slotOf(id)
+  return { state: slot.state, output: slot.output, exitCode: slot.exitCode, failure: slot.failure }
+}
+
 /** The folder the application lives in: the repository root, or the one inside it. */
 export function applicationFolder(project: Project): string {
   return project.appDirectory === ''
@@ -81,14 +97,166 @@ export function applicationFolder(project: Project): string {
     : `${project.repository}/${project.appDirectory}`
 }
 
-/** Where the application answers: the address its command names, or the one it printed. */
-export function applicationAddress(project: Project, output: readonly string[]): string {
-  if (project.startUrl !== '') return project.startUrl
+/**
+ * The address a running application printed when it said it was ready, or empty while it has said
+ * nothing. A dev server names the address it really bound, which is the only address a page can be
+ * trusted to answer on.
+ */
+export function printedAddress(output: readonly string[]): string {
   for (let index = output.length - 1; index >= 0; index -= 1) {
     const found = ADDRESS.exec(output[index].replace(TERMINAL_CODES, ''))
     if (found) return found[0]
   }
   return ''
+}
+
+/**
+ * Where the application answers: the address it printed, or the one its command named when it has
+ * not printed anything yet. What a server announces wins over what a command line guessed, since
+ * only the server knows which loopback it took.
+ */
+export function applicationAddress(project: Project, output: readonly string[]): string {
+  return printedAddress(output) || project.startUrl
+}
+
+/** Whether the run is up or on its way, which is one at a time. */
+function isActive(run: ProjectRun): boolean {
+  return run.state.value === 'starting' || run.state.value === 'running'
+}
+
+async function attach(run: RunSlot, id: string, events: ProjectRunnerEvents): Promise<void> {
+  run.detach()
+  const stops: (() => void)[] = []
+  // Bound before the listeners are, so a listener that fails to bind leaves nothing behind: an
+  // exit that arrives meanwhile stops what was already bound instead of leaking it.
+  run.detach = () => {
+    for (const stop of stops.splice(0)) stop()
+  }
+  try {
+    stops.push(
+      await events.listenOutput((event) => {
+        if (event.id !== id) return
+        run.output.value = [...run.output.value, event.line].slice(-MAX_OUTPUT_LINES)
+      })
+    )
+    stops.push(
+      await events.listenExit((event) => {
+        if (event.id !== id) return
+        run.state.value = 'stopped'
+        run.exitCode.value = event.code
+        run.detach()
+      })
+    )
+  } catch (error) {
+    run.detach()
+    throw error
+  }
+}
+
+/**
+ * Say a run that was starting is now running. A process that exited before its start command
+ * answered has already moved the run to stopped, and its exit code is what the panel should
+ * show, so a run that is no longer starting keeps the state it reached.
+ */
+function markStarted(run: ProjectRun): void {
+  if (run.state.value === 'starting') run.state.value = 'running'
+}
+
+/**
+ * Start the application a project holds, unless it is already running. The address a project was
+ * given is kept even without a run: a server someone started in their own terminal is still one
+ * the screens can be shown from.
+ */
+export async function startProjectRun(
+  project: Project,
+  transport: ProjectRunnerTransport = invoke,
+  events: ProjectRunnerEvents = nativeProjectRunnerEvents()
+): Promise<boolean> {
+  const run = slotOf(project.id)
+  if (project.startCommand.trim() === '') return false
+  // One application at a time: a second press must not clear the output of a run that is up.
+  if (isActive(run)) return false
+  run.state.value = 'starting'
+  run.failure.value = null
+  run.exitCode.value = null
+  run.output.value = []
+  try {
+    // The window's events are bound before the process starts, so its first line is kept.
+    await attach(run, project.id, events)
+    await transport('project_start', {
+      id: project.id,
+      directory: applicationFolder(project),
+      command: project.startCommand
+    })
+    markStarted(run)
+    return true
+  } catch (error) {
+    run.detach()
+    run.state.value = 'failed'
+    run.failure.value = error instanceof Error ? error.message : String(error)
+    return false
+  }
+}
+
+/** Stop whatever a project runs, by id: the run outlives the screen that started it. */
+export async function stopProjectRun(
+  id: string,
+  transport: ProjectRunnerTransport = invoke
+): Promise<void> {
+  const run = slotOf(id)
+  run.detach()
+  run.state.value = 'idle'
+  run.exitCode.value = null
+  try {
+    await transport('project_stop', { id })
+  } catch (error) {
+    // A project that runs nothing needs no stopping; the removal goes ahead either way.
+    console.warn('[Runner] Stopping a removed project failed:', error)
+  }
+}
+
+/**
+ * Answer whether a project's application is already running, so a window that reloaded — or a
+ * panel that mounted later — picks the run it left up instead of starting a second one.
+ */
+export async function restoreProjectRun(
+  project: Project,
+  transport: ProjectRunnerTransport = invoke,
+  events: ProjectRunnerEvents = nativeProjectRunnerEvents()
+): Promise<boolean> {
+  const run = slotOf(project.id)
+  try {
+    const pid = await transport('project_run', { id: project.id })
+    if (typeof pid !== 'number') return false
+    run.state.value = 'running'
+    await attach(run, project.id, events)
+    return true
+  } catch (error) {
+    // A run that could not be bound to this window runs nothing: the next attempt has to reach the
+    // start of a run, not the middle of one that never happened.
+    run.detach()
+    run.state.value = 'idle'
+    // A build without the native runner has nothing to ask; the screen stays idle.
+    console.warn('[Runner] Asking for the running application failed:', error)
+    return false
+  }
+}
+
+/**
+ * The application a project holds, running: the run that is already up, or one started here. A
+ * project with no start command leaves the run idle, which is what a person who started the
+ * server in their own terminal has.
+ */
+export async function ensureProjectRun(
+  project: Project,
+  transport: ProjectRunnerTransport = invoke,
+  events: ProjectRunnerEvents = nativeProjectRunnerEvents()
+): Promise<void> {
+  const run = slotOf(project.id)
+  if (isActive(run)) return
+  if (await restoreProjectRun(project, transport, events)) return
+  if (project.startCommand.trim() === '') return
+  await startProjectRun(project, transport, events)
 }
 
 /**
@@ -100,101 +268,23 @@ export function useProjectRunner(
   transport: ProjectRunnerTransport = invoke,
   events: ProjectRunnerEvents = nativeProjectRunnerEvents()
 ) {
-  const run = runOf(toValue(project).id)
+  const id = toValue(project).id
+  const run = slotOf(id)
 
   /** Whether the application is running or on its way, which is one at a time. */
-  const active = computed(() => run.state.value === 'starting' || run.state.value === 'running')
-
-  async function attach(id: string): Promise<void> {
-    run.detach()
-    const stops: (() => void)[] = []
-    // Bound before the listeners are, so a listener that fails to bind leaves nothing behind: an
-    // exit that arrives meanwhile stops what was already bound instead of leaking it.
-    run.detach = () => {
-      for (const stop of stops.splice(0)) stop()
-    }
-    try {
-      stops.push(
-        await events.listenOutput((event) => {
-          if (event.id !== id) return
-          run.output.value = [...run.output.value, event.line].slice(-MAX_OUTPUT_LINES)
-        })
-      )
-      stops.push(
-        await events.listenExit((event) => {
-          if (event.id !== id) return
-          run.state.value = 'stopped'
-          run.exitCode.value = event.code
-          run.detach()
-        })
-      )
-    } catch (error) {
-      run.detach()
-      throw error
-    }
-  }
-
-  /**
-   * Say a run that was starting is now running. A process that exited before its start command
-   * answered has already moved the run to stopped, and its exit code is what the panel should
-   * show, so a run that is no longer starting keeps the state it reached.
-   */
-  function markStarted(): void {
-    if (run.state.value === 'starting') run.state.value = 'running'
-  }
+  const active = computed(() => isActive(run))
 
   async function start(): Promise<boolean> {
-    const target = toValue(project)
-    if (target.startCommand.trim() === '') return false
-    // One application at a time: a second press must not clear the output of a run that is up.
-    if (active.value) return false
-    run.state.value = 'starting'
-    run.failure.value = null
-    run.exitCode.value = null
-    run.output.value = []
-    try {
-      // The window's events are bound before the process starts, so its first line is kept.
-      await attach(target.id)
-      await transport('project_start', {
-        id: target.id,
-        directory: applicationFolder(target),
-        command: target.startCommand
-      })
-      markStarted()
-      return true
-    } catch (error) {
-      run.detach()
-      run.state.value = 'failed'
-      run.failure.value = error instanceof Error ? error.message : String(error)
-      return false
-    }
+    return startProjectRun(toValue(project), transport, events)
   }
 
   async function stop(): Promise<void> {
-    const target = toValue(project)
-    try {
-      await transport('project_stop', { id: target.id })
-    } catch (error) {
-      // A run that already exited needs no stopping; anything else is worth seeing.
-      console.warn('[Runner] Stopping the application failed:', error)
-    }
-    run.state.value = 'idle'
-    run.exitCode.value = null
-    run.detach()
+    await stopProjectRun(id, transport)
   }
 
   /** A window that reloaded picks the run it left up again instead of showing an idle project. */
   async function restore(): Promise<void> {
-    const target = toValue(project)
-    try {
-      const pid = await transport('project_run', { id: target.id })
-      if (typeof pid !== 'number') return
-      run.state.value = 'running'
-      await attach(target.id)
-    } catch (error) {
-      // A build without the native runner has nothing to ask; the screen stays idle.
-      console.warn('[Runner] Asking for the running application failed:', error)
-    }
+    await restoreProjectRun(toValue(project), transport, events)
   }
 
   void restore()
@@ -208,25 +298,5 @@ export function useProjectRunner(
     address: computed(() => applicationAddress(toValue(project), run.output.value)),
     start,
     stop
-  }
-}
-
-/**
- * Stop whatever a project runs, for a project that is no longer listed. The screen that started it
- * is gone with the project, so nothing of its own would ever ask for the stop.
- */
-export async function stopProjectRun(
-  id: string,
-  transport: ProjectRunnerTransport = invoke
-): Promise<void> {
-  const run = runOf(id)
-  run.detach()
-  run.state.value = 'idle'
-  run.exitCode.value = null
-  try {
-    await transport('project_stop', { id })
-  } catch (error) {
-    // A project that runs nothing needs no stopping; the removal goes ahead either way.
-    console.warn('[Runner] Stopping a removed project failed:', error)
   }
 }

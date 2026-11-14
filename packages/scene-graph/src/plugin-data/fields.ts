@@ -28,7 +28,7 @@ import {
   withoutPluginData,
   type PluginDataKey
 } from './field'
-import { driftSchema, livePageSchema } from './schema'
+import { documentProjectSchema, driftSchema, livePageSchema, screenCopySchema } from './schema'
 
 const DIRECTIONS = ['AUTO', 'LTR', 'RTL'] as const satisfies readonly (
   | TextDirection
@@ -201,6 +201,8 @@ export const OPEN_PENCIL_PLUGIN_DATA = {
   statuses: jsonPluginDataField('statuses', 'bookkeeping', statusWorkflowSchema),
   /** The page baselines a document keeps, on the DOCUMENT node. */
   drift: jsonPluginDataField('drift', 'bookkeeping', driftSchema),
+  /** The project whose application a document shows the screens of, on the DOCUMENT node. */
+  documentProject: jsonPluginDataField('documentProject', 'bookkeeping', documentProjectSchema),
   /** How tightly the document's `.fig` data is compressed, on the DOCUMENT node. */
   figCompression: textPluginDataField('figCompression', 'bookkeeping', FIG_COMPRESSIONS),
   /** A layer's status, any state of the workflow; Figma's `sectionStatusInfo` knows only two. */
@@ -225,6 +227,8 @@ export const OPEN_PENCIL_PLUGIN_DATA = {
   behaviour: jsonPluginDataField('behaviour', 'content', behaviourSchema),
   /** The page of the running application a frame shows, on a FRAME. */
   livePage: jsonPluginDataField('livePage', 'content', livePageSchema),
+  /** The branch the screen's copy lives on, on the frame that shows it. */
+  screenCopy: jsonPluginDataField('screenCopy', 'content', screenCopySchema),
   /** The icon a frame draws, such as `lucide:home`, on the frame its paths are in. */
   icon: jsonPluginDataField('icon', 'content', iconSchema),
   /** Which of an icon path's paints its icon's color sets, on each path the source drew in it. */

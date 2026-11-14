@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  packages: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -230,19 +229,20 @@ jobs:
     name: Native app contracts
     needs: changes
     if: needs.changes.outputs.scope == 'code' || needs.changes.outputs.scope == 'cloud'
-    timeout-minutes: 8
+    timeout-minutes: 12
     runs-on: ubuntu-24.04
-    container:
-      image: ghcr.io/open-pencil/native-contracts-ci@sha256:64e6b1b50a988c1cefe2b69ac9d58076fd743b18391fa2dbd1d153eba2be9521
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # The image has no Rust: rustup alone, which installs the toolchain rust-toolchain.toml pins.
+      # The job runs on the runner rather than in an image of the organization's own registry: a
+      # fork cannot pull that image, and the repositories it cannot check are the ones that need
+      # this check most. The libraries are the ones the desktop app builds against on Linux.
+      - name: Install the libraries the desktop app builds against
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
+
+      # Rust comes from rustup alone, which installs the toolchain rust-toolchain.toml pins.
       - name: Install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none && echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 

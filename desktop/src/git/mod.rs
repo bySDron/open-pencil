@@ -36,6 +36,7 @@ const ALLOWED_SUBCOMMANDS: &[&str] = &[
     "status",
     "switch",
     "tag",
+    "worktree",
 ];
 
 /// Flags that move git away from the repository it is given, let it run another program, or write a
@@ -335,5 +336,15 @@ mod tests {
         assert!(validate_args("commit", &args(&["-m", "x", "--no-verify"])).is_err());
         assert!(validate_args("commit", &args(&["-m", "x"])).is_ok());
         assert!(validate_args("log", &args(&["-n", "5"])).is_ok());
+    }
+
+    #[test]
+    fn a_copy_of_a_screen_is_a_checkout_beside_the_repository() {
+        // The panel makes a copy as a worktree of its own branch, with the path it chose.
+        assert!(
+            validate_args("worktree", &args(&["add", "/tmp/pricing.copy", "op/pricing"])).is_ok()
+        );
+        // A checkout still may not be pointed at another repository or write a file git never made.
+        assert!(validate_args("worktree", &args(&["add", "-C", "/tmp/x", "op/x"])).is_err());
     }
 }

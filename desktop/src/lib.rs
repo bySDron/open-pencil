@@ -8,6 +8,7 @@ mod files;
 mod fonts;
 mod git;
 mod icons;
+mod inspect;
 mod launch;
 mod menu;
 mod network;
@@ -161,7 +162,9 @@ pub fn run() {
             }
 
             // The main window is built here rather than from the config alone, so that pages it
-            // opens with `window.open` reach the system browser.
+            // opens with `window.open` reach the system browser. The inspector runs in every frame
+            // the window shows, which is how a live page - served by another origin - can be read
+            // at all: it is the page's own script, answering the app over `postMessage`.
             let main = app
                 .config()
                 .app
@@ -171,6 +174,7 @@ pub fn run() {
                 .ok_or("the main window is not configured")?;
             tauri::WebviewWindowBuilder::from_config(app.handle(), &main)?
                 .initialization_script(capabilities.init_script())
+                .initialization_script(inspect::RUNTIME)
                 .on_new_window(system::opener::open_new_window_externally(
                     app.handle().clone(),
                 ))
