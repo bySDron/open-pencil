@@ -3,6 +3,7 @@ import * as v from 'valibot'
 import { computed, ref, watch } from 'vue'
 
 import {
+  acpAgentFor,
   AI_PROVIDERS,
   DEFAULT_AI_MODEL,
   DEFAULT_AI_PROVIDER,
@@ -135,6 +136,15 @@ function curatedModelCapabilities(
   return model?.capabilities ? [...model.capabilities] : null
 }
 
+/**
+ * What a coding agent takes, for the models that are one: an agent reports its own capabilities,
+ * and a session with it is the model as far as this app is concerned.
+ */
+function agentCapabilities(providerID: AIProviderID): AIModelCapability[] | null {
+  const agent = acpAgentFor(providerID)
+  return agent?.capabilities ? [...agent.capabilities] : null
+}
+
 function hydrateCuratedCapabilities(
   profiles: AIModelProfile[],
   connections: AIModelConnection[]
@@ -143,7 +153,9 @@ function hydrateCuratedCapabilities(
     if (profile.customModelID) continue
     const connection = connections.find((candidate) => candidate.id === profile.connectionId)
     if (!connection) continue
-    const capabilities = curatedModelCapabilities(connection.providerID, profile.modelID)
+    const capabilities =
+      curatedModelCapabilities(connection.providerID, profile.modelID) ??
+      agentCapabilities(connection.providerID)
     if (capabilities) profile.capabilities = uniq(capabilities)
   }
 }
@@ -268,6 +280,16 @@ export function modelConnection(connectionId: string): AIModelConnection | null 
 
 export function isDesignModelProfile(profile: AIModelProfile): boolean {
   return profile.capabilities.includes('tools')
+}
+
+/**
+ * Whether the design model reads images itself. A provider's model says so in the catalog, and a
+ * coding agent says so about its own session; either way a picture attached to a message goes to
+ * it as it is, instead of being described by a second model first.
+ */
+export function designModelTakesImages(): boolean {
+  const design = modelProfile(aiModelSettings.value.assignments.design)
+  return design?.capabilities.includes('vision') ?? false
 }
 
 export function designModelProfiles(): AIModelProfile[] {

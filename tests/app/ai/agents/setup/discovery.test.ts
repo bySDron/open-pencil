@@ -153,7 +153,8 @@ describe('local agent discovery', () => {
       ['gemini-cli', 'not-installed'],
       ['antigravity', 'not-installed'],
       ['cursor', 'not-installed'],
-      ['grok-build', 'not-installed']
+      ['grok-build', 'not-installed'],
+      ['dsh', 'not-installed']
     ])
   })
 
@@ -165,7 +166,8 @@ describe('local agent discovery', () => {
       ['gemini-cli', 'not-installed'],
       ['antigravity', 'not-installed'],
       ['cursor', 'not-installed'],
-      ['grok-build', 'not-installed']
+      ['grok-build', 'not-installed'],
+      ['dsh', 'not-installed']
     ])
   })
 

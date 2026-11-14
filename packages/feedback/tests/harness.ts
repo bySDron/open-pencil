@@ -78,6 +78,11 @@ export async function createTestService() {
     TURNSTILE_SECRET: 'turnstile-secret',
     TURNSTILE_HOSTNAMES: 'openpencil.dev,app.openpencil.dev',
     EMAIL_FROM: 'hello@openpencil.dev',
+    // Pinned rather than read from `wrangler.jsonc`: Wrangler lets the environment of the machine
+    // override a var of the same name, and GitHub Actions sets GITHUB_REPOSITORY to the repository
+    // the run belongs to. A fork would then ask GitHub about itself, and the answers the tests
+    // register for this repository would never be called.
+    GITHUB_REPOSITORY: 'open-pencil/open-pencil',
     GITHUB_TOKEN: 'github-token',
     CLOUDFLARE_ANALYTICS_TOKEN: 'cloudflare-token',
     ACCESS_TEAM_DOMAIN: 'https://openpencil.cloudflareaccess.com',

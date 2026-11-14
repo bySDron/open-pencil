@@ -54,7 +54,8 @@ export const AI_PROVIDERS = [
   'acp:gemini-cli',
   'acp:antigravity',
   'acp:cursor',
-  'acp:grok-build'
+  'acp:grok-build',
+  'acp:dsh'
 ] as const
 
 export type Platform = (typeof PLATFORMS)[number]

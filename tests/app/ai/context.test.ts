@@ -4,6 +4,8 @@ import { SceneGraph } from '@open-pencil/scene-graph'
 
 import {
   MAX_REFERENCED_NODES,
+  appendScreenElementContext,
+  describePickedElement,
   resolveReferencedNodes,
   stripModelNotes
 } from '@/app/ai/chat/context'
@@ -51,5 +53,55 @@ describe('AI chat node context', () => {
     )
 
     expect(resolveReferencedNodes(graph, ids)).toHaveLength(MAX_REFERENCED_NODES)
+  })
+})
+
+describe('the element a person picked on a running page', () => {
+  test('is named by its selector, its component, and what was changed on it', () => {
+    const described = describePickedElement({
+      selector: 'button.rp-button',
+      componentFile: '/app/components/SaveButton.vue',
+      changed: 'padding: 4px 8px'
+    })
+
+    expect(described).toContain('`button.rp-button`')
+    expect(described).toContain('/app/components/SaveButton.vue')
+    expect(described).toContain('padding: 4px 8px')
+  })
+
+  test('a change nobody made leaves that sentence out', () => {
+    const described = describePickedElement({
+      selector: 'div.card',
+      componentFile: null,
+      changed: ''
+    })
+
+    expect(described).not.toContain('Values changed')
+    expect(described).not.toContain('rendered by')
+  })
+
+  test('the request carries it, after what the person wrote', () => {
+    const text = appendScreenElementContext('make the button wider', {
+      selector: 'button.rp-button',
+      componentFile: null,
+      changed: ''
+    })
+
+    expect(text.startsWith('make the button wider')).toBe(true)
+    expect(text).toContain('button.rp-button')
+  })
+
+  test('a request with nothing picked is the words the person wrote', () => {
+    expect(appendScreenElementContext('hello', null)).toBe('hello')
+  })
+
+  test('the note is not shown back as if the person had written it', () => {
+    const text = appendScreenElementContext('make it wider', {
+      selector: 'button',
+      componentFile: null,
+      changed: ''
+    })
+
+    expect(stripModelNotes(text)).toBe('make it wider')
   })
 })

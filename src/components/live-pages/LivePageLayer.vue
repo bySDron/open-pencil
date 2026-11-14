@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
-import { computed, ref } from 'vue'
+import { useEventListener, useElementSize } from '@vueuse/core'
+import { computed, reactive, ref, watch } from 'vue'
 
 import { resolveEditorProfile, type EditorProfileInputs, type EditorState } from '@open-pencil/core'
 import type { ViewportTransform } from '@open-pencil/core/geometry'
 
+import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
+import { requestPageTree, sendToPage, setPageTree } from '@/app/live-pages/inspect/bridge'
+import { pageUnderPointer } from '@/app/live-pages/pointer'
+import { resumePages, suspendPage } from '@/app/live-pages/suspend'
+import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect/protocol'
+import {
+  isPicking,
+  pickFromPage,
+  startPicking,
+  stopPicking,
+  stylesFromPage
+} from '@/app/live-pages/pick'
 import { layerTransform } from '@/app/live-pages/placement'
 import { useLivePageSelection } from '@/app/live-pages/selection'
 import { useLivePages } from '@/app/live-pages/use'
+import { screensInView } from '@/app/live-pages/visibility'
 
 import LivePageFrame from './LivePageFrame.vue'
 
@@ -16,6 +29,9 @@ import LivePageFrame from './LivePageFrame.vue'
  * The pages of the running application, laid over the canvas at its pan and zoom. The layer takes
  * no pointer while editing, so selecting and panning stay the canvas's; a previewing pane hands
  * the pointer to the page itself.
+ *
+ * It is also where a page's own answers arrive: the inspector inside every frame reports what a
+ * person pointed at, what the page's elements are, and what changed, all over `postMessage`.
  */
 const {
   view,
@@ -34,10 +50,33 @@ const {
 
 const { pages, placementOf, revisionOf } = useLivePages({ pageId: () => view.currentPageId })
 const { setSelection } = useLivePageSelection()
+const store = useEditorStore()
 const placement = computed(() => drawn ?? view)
 const transform = computed(() => layerTransform(placement.value))
 const interactive = computed(() => resolveEditorProfile(view).live !== null)
 const root = ref<HTMLElement | null>(null)
+
+// Escape leaves the picking mode, as it leaves every mode the canvas puts a person in; E takes the
+// next click as an element, which is the one shortcut an inspector is used by. `V` is the Select
+// tool, so the letter an inspector would rather have is not free.
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    if (isPicking.value) stopPicking()
+    return
+  }
+  if (event.key !== 'e' && event.key !== 'E') return
+  if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event)) return
+  if (isPicking.value) stopPicking()
+  else startPicking()
+})
+
+/** Whether a key was typed into a field, where `e` means the letter and nothing else. */
+function isTyping(event: KeyboardEvent): boolean {
+  const target = event.target as HTMLElement | null
+  if (target === null) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
 
 /** The origins a selection may come from: only the pages this layer shows. */
 const origins = computed(() => {
@@ -64,9 +103,35 @@ function reportingFrame(source: MessageEventSource | null): string | null {
   return null
 }
 
+/** What the inspector in a page answered. */
+function onInspect(nodeId: string, message: InspectMessage): void {
+  if (message.type === 'tree') {
+    setPageTree(nodeId, message.nodes)
+    return
+  }
+  if (message.type === 'ready') {
+    requestPageTree(nodeId)
+    return
+  }
+  if (message.type === 'picked') {
+    // A picked element is the frame's own selection too, so the panel describes that screen.
+    store.select([nodeId])
+    pickFromPage(nodeId, message.pick)
+    return
+  }
+  if (message.type === 'styles') {
+    stylesFromPage(nodeId, message.styles, message.rect)
+  }
+}
+
 function onMessage(event: MessageEvent): void {
   const nodeId = reportingFrame(event.source)
   if (nodeId === null || !origins.value.has(event.origin)) return
+  const inspect = readInspectMessage(event.data)
+  if (inspect !== null) {
+    onInspect(nodeId, inspect)
+    return
+  }
   const picked = readLiveSelection(event.data)
   if (picked !== null) setSelection(nodeId, picked)
 }
@@ -78,6 +143,88 @@ function forwardWheel(event: WheelEvent) {
   event.preventDefault()
   canvas.dispatchEvent(new WheelEvent(event.type, event))
 }
+
+/** How often the element under the pointer is asked for, which is often enough to follow it. */
+const HOVER_INTERVAL_MS = 60
+let hoveredAt = 0
+
+useEventListener(canvas, 'mousemove', (event: MouseEvent) => {
+  if (!isPicking.value) return
+  const now = performance.now()
+  if (now - hoveredAt < HOVER_INTERVAL_MS) return
+  hoveredAt = now
+  const hit = pageUnderPointer(event)
+  if (hit !== null) sendToPage(hit.nodeId, { type: 'hoverAt', x: hit.x, y: hit.y })
+})
+
+/**
+ * A layer being moved is drawn by the canvas from a place the graph does not hold, so the page it
+ * carries stands aside for the length of the gesture rather than staying behind at the old place.
+ */
+let movedFrom: { nodeId: string; x: number; y: number } | null = null
+const DRAG_THRESHOLD = 4
+
+useEventListener(canvas, 'mousedown', (event: MouseEvent) => {
+  const hit = pageUnderPointer(event)
+  movedFrom = hit === null ? null : { nodeId: hit.nodeId, x: event.clientX, y: event.clientY }
+})
+
+useEventListener(canvas, 'mousemove', (event: MouseEvent) => {
+  if (movedFrom === null || event.buttons === 0) return
+  const far =
+    Math.abs(event.clientX - movedFrom.x) + Math.abs(event.clientY - movedFrom.y) > DRAG_THRESHOLD
+  if (far) suspendPage(movedFrom.nodeId)
+})
+
+useEventListener(window, 'mouseup', () => {
+  movedFrom = null
+  resumePages()
+})
+useEventListener(canvas, 'click', (event: MouseEvent) => {
+  if (!isPicking.value) return
+  const hit = pageUnderPointer(event)
+  if (hit !== null) sendToPage(hit.nodeId, { type: 'pickAt', x: hit.x, y: hit.y })
+})
+
+const size = useElementSize(root)
+
+/** The screens of this layer as the canvas places them, which is what decides what they cost. */
+const screens = computed(() =>
+  pages.value.map((entry) => {
+    const at = placementOf(entry)
+    return { nodeId: entry.nodeId, at: { x: at.left, y: at.top }, width: at.width, height: at.height }
+  })
+)
+
+/** The screens in the view, whose pictures are worth taking: the rest are not looked at. */
+const visibility = computed(() =>
+  screensInView(screens.value, placement.value, {
+    width: size.width.value,
+    height: size.height.value
+  })
+)
+
+/**
+ * The screens that run: every screen that has once come near the view. A page is never taken down
+ * again - its state, its scroll position and its open panels are what a person comes back to - so
+ * the only thing the canvas decides is whether a running page is drawn.
+ */
+const mounted = reactive(new Set<string>())
+
+watch(
+  visibility,
+  (now) => {
+    for (const nodeId of now.running) mounted.add(nodeId)
+  },
+  { immediate: true }
+)
+
+/** The screen a person is working on: the selected one, whose elements clicks select. */
+const focusedId = computed(() => {
+  const [first] = store.state.selectedIds
+  return first ?? null
+})
+
 </script>
 
 <template>
@@ -96,6 +243,10 @@ function forwardWheel(event: WheelEvent) {
         :placement="placementOf(entry)"
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
+        :picking="isPicking && entry.nodeId === focusedId"
+        :focused="entry.nodeId === focusedId"
+        :running="mounted.has(entry.nodeId)"
+        :parked="!visibility.shown.has(entry.nodeId)"
       />
     </div>
   </div>

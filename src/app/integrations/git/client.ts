@@ -308,6 +308,20 @@ export async function switchBranch(
   return report.ok ? { ok: true, value: null } : report
 }
 
+/**
+ * Check `branch` out at `path` as a worktree, so the branch has a folder of its own without the
+ * person's own checkout moving. The path is the caller's: a copy lives beside the repository.
+ */
+export async function addWorktree(
+  repo: string,
+  path: string,
+  branch: string,
+  transport: GitTransport = invoke
+): Promise<GitOutcome<null>> {
+  const report = await runGit(repo, 'worktree', ['add', path, branch], transport)
+  return report.ok ? { ok: true, value: null } : report
+}
+
 /** How many versions of a file the history lists; older ones stay in git. */
 const HISTORY_LIMIT = 30
 

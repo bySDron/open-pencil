@@ -41,6 +41,7 @@ import IconSection from './properties/IconSection.vue'
 import LayerTypeMenu from './properties/LayerTypeMenu.vue'
 import LayoutGridSection from './properties/layout/guides/LayoutGridSection.vue'
 import LayoutSection from './properties/layout/LayoutSection.vue'
+import LiveElementSection from './properties/LiveElementSection.vue'
 import LivePageDriftSection from './properties/LivePageDriftSection.vue'
 import LivePageSection from './properties/LivePageSection.vue'
 import MaskSection from './properties/MaskSection.vue'
@@ -255,6 +256,7 @@ const { panels } = useI18n()
       <!-- A page is a property of the frame's content, so it follows the frame's own geometry and
            styling rather than pushing them off the panel. -->
       <LivePageSection />
+      <LiveElementSection />
       <LivePageDriftSection />
 
       <ExportSection />

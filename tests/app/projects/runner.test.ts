@@ -93,7 +93,7 @@ test('keeps what the application prints and reads its address from it', async ()
   expect(runner.address.value).toBe('http://localhost:5173')
 })
 
-test('the address the command names wins over the printed one', () => {
+test('the address the application printed wins over the one its command named', () => {
   const fromManifest = createProject({
     repository: 'D:/app',
     startCommand: 'vite --port 4000',
@@ -101,7 +101,11 @@ test('the address the command names wins over the printed one', () => {
   })
   if (fromManifest === null) throw new Error('the fixture must make a project')
 
-  expect(applicationAddress(fromManifest, ['http://localhost:5173/'])).toBe('http://127.0.0.1:4000')
+  // A server says which loopback it took; a command line only guesses one of them.
+  expect(applicationAddress(fromManifest, ['  ➜  Local:   http://localhost:5173/'])).toBe(
+    'http://localhost:5173'
+  )
+  expect(applicationAddress(fromManifest, [])).toBe('http://127.0.0.1:4000')
   expect(applicationAddress(project('D:/app', '', 'vite --port 4000'), [])).toBe('')
 })
 

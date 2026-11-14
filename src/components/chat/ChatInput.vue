@@ -11,6 +11,8 @@ import { takeBackMessages } from '@/app/ai/chat/queue'
 import type { ChatSubmission } from '@/app/ai/chat/submission/types'
 import { useAIChat } from '@/app/ai/chat/use'
 import { designModelProfile } from '@/app/ai/models'
+import { selectorOf } from '@/app/live-pages/inspect'
+import { clearPick, pickedElement } from '@/app/live-pages/pick'
 import ChatProfileSelect from '@/components/chat/ChatProfileSelect.vue'
 import ChatThinkingSelect from '@/components/chat/ChatThinkingSelect.vue'
 import { useComposerCompletions } from '@/components/chat/composer/useComposerCompletions'
@@ -22,7 +24,7 @@ import ChatComposer from './ChatComposer.vue'
 
 const { providerID, providerDef, modelID, customModelID } = useAIChat()
 const { editor, selectedIds } = useSelectionState()
-const { ai } = useI18n()
+const { ai, livePages } = useI18n()
 
 const {
   status,
@@ -126,6 +128,14 @@ const selectedModelName = computed(() => {
 const selectedProfileName = computed(
   () => designModelProfile.value?.name ?? selectedModelName.value
 )
+
+/**
+ * The element picked on a running page, which the request will carry: shown, because a note the
+ * agent reads and the person cannot see is a note they cannot trust or take back.
+ */
+const pickedSelector = computed(() =>
+  pickedElement.value === null ? '' : selectorOf(pickedElement.value.node)
+)
 </script>
 
 <template>
@@ -140,8 +150,25 @@ const selectedProfileName = computed(
     @interrupt="emit('interrupt')"
     @paste="handlePaste"
   >
-    <template v-if="images.length" #attachment>
-      <div class="flex flex-wrap gap-1.5">
+    <template v-if="images.length || pickedSelector" #attachment>
+      <!-- The element a request will be about, which the agent reads and the person can drop. -->
+      <div
+        v-if="pickedSelector"
+        class="mb-1.5 flex min-w-0 items-center gap-1.5 rounded-lg border border-border bg-canvas px-1.5 py-1 shadow-xs"
+        data-test-id="chat-picked-element"
+      >
+        <icon-lucide-mouse-pointer class="size-3 shrink-0 text-muted" />
+        <code class="min-w-0 flex-1 truncate text-3xs text-surface">{{ pickedSelector }}</code>
+        <IconButton
+          :label="livePages.elementClear"
+          size="xs"
+          data-test-id="chat-picked-element-clear"
+          @click="clearPick()"
+        >
+          <icon-lucide-x class="size-3" />
+        </IconButton>
+      </div>
+      <div v-if="images.length" class="flex flex-wrap gap-1.5">
         <div
           v-for="(image, index) in images"
           :key="image.previewURL"

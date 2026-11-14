@@ -19,6 +19,7 @@ import {
 } from '@/app/ai/chat/queue'
 import { leadingCommand, type LeadingCommand } from '@/app/ai/chat/references/command'
 import { useChatRunLocation } from '@/app/ai/chat/run-location'
+import { pendingScreenTask, takeScreenTask } from '@/app/ai/chat/screen-task'
 import type { ChatSubmission } from '@/app/ai/chat/submission/types'
 import { useChatSubmission } from '@/app/ai/chat/submission/use'
 import { saveChatTrace } from '@/app/ai/chat/trace/export'
@@ -52,7 +53,8 @@ const {
   history,
   chatFailure,
   clearChatFailure,
-  providerID
+  providerID,
+  resetChat
 } = useAIChat()
 const { ai } = useI18n()
 const dates = useDateFormat()
@@ -90,6 +92,23 @@ const chatInput = useTemplateRef<{
   restoreDraft: (submission: ChatSubmission) => void
   dropFiles: (files: File[]) => void
 }>('chatInput')
+
+/**
+ * A screen hands the chat a task and the folder its copy lives in: the chat starts clean so the
+ * agent opens in that folder, and the task waits in the composer for the person to send it.
+ */
+watch(pendingScreenTask, (task) => {
+  if (task === null) return
+  const taken = takeScreenTask()
+  if (taken === null) return
+  void resetChat()
+  chatInput.value?.restoreDraft({
+    modelText: taken.prompt,
+    displayText: taken.prompt,
+    images: [],
+    nodes: []
+  })
+})
 const panel = useTemplateRef<HTMLElement>('panel')
 // Images dropped anywhere on the chat go to the composer, when there is one to take them.
 const { dragging: draggingImages } = useImageDrop(panel, {

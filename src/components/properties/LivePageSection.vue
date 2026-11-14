@@ -2,14 +2,17 @@
 import { computed, ref, watch } from 'vue'
 
 import { useLivePageMessages } from '@open-pencil/vue/i18n'
+import { vTestId } from '@open-pencil/vue/testing'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, selectionLocation } from '@/app/live-pages/bridge'
 import { useLivePagesSource } from '@/app/live-pages/open'
+import { isPicking, startPicking, stopPicking } from '@/app/live-pages/pick'
 import { parseRouteParams } from '@/app/live-pages/routes'
 import { normalizeLiveURL, readLivePage } from '@/app/live-pages/schema'
 import { useLivePageSelection } from '@/app/live-pages/selection'
 import { useLivePages } from '@/app/live-pages/use'
+import { SCREEN_WIDTHS, resizeScreen, widthKind, type ScreenWidth } from '@/app/live-pages/widths'
 import { openExternalLink } from '@/app/shell/ui'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
@@ -22,6 +25,33 @@ const messages = useLivePageMessages()
 const { setPage, link, reload } = useLivePages()
 const { selectionOf } = useLivePageSelection()
 const { project, baseAddress, listRoutes, openAll: openPages } = useLivePagesSource()
+
+/** The widths a screen is looked at, and the one this frame shows now. */
+const widths = computed(() => {
+  const names: Record<string, string> = {
+    desktop: messages.value.widthDesktop,
+    tablet: messages.value.widthTablet,
+    phone: messages.value.widthPhone
+  }
+  const current = node.value
+  return SCREEN_WIDTHS.map((width) => ({
+    width,
+    label: names[widthKind(width)] ?? String(width),
+    active: current !== null && widthKind(current.width) === widthKind(width)
+  }))
+})
+
+/** Show this frame's page at a width, which the page's own layout answers. */
+function applyWidth(width: ScreenWidth): void {
+  const target = node.value
+  if (target !== null) resizeScreen(store, target.id, width)
+}
+
+/** Take the next click on the page as an element, which the panel then describes. */
+function togglePick(): void {
+  if (isPicking.value) stopPicking()
+  else startPicking()
+}
 
 /** The selected frame, which is the only kind of layer a page can fill. */
 const node = computed(() => {
@@ -129,6 +159,36 @@ async function copySelection(): Promise<void> {
         <icon-lucide-unlink class="size-3.5" />
       </IconButton>
     </template>
+
+    <!-- The two decisions a designer makes about a screen, kept where the screen is selected. -->
+    <div v-if="page" class="mb-2 flex flex-wrap gap-1">
+      <button
+        v-for="option in widths"
+        :key="option.width"
+        type="button"
+        class="rounded-full border px-2 py-0.5 text-3xs disabled:opacity-50"
+        :class="
+          option.active
+            ? 'border-accent/40 bg-accent/15 text-accent'
+            : 'border-border text-muted hover:text-surface'
+        "
+        :disabled="!page"
+        v-test-id="`live-page-width-${option.width}`"
+        @click="applyWidth(option.width)"
+      >
+        {{ option.label }}
+      </button>
+    </div>
+    <AppButton
+      v-if="page"
+      class="mb-2 w-full"
+      size="sm"
+      variant="outline"
+      data-test-id="live-page-pick"
+      @click="togglePick"
+    >
+      {{ isPicking ? messages.pickHint : messages.pickElement }}
+    </AppButton>
 
     <PanelFieldGroup :label="messages.url">
       <AppInput
