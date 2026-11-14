@@ -57,7 +57,8 @@ export const livePageMessageDefaults = {
   filterNotOpen: 'Not opened',
   copyScreen: 'Make a copy',
   copyFailed: 'The copy could not be made. Check that the project repository is readable.',
-  copyNoRepository: 'A copy needs a document saved inside a project.'
+  copyNoRepository: 'A copy needs a document saved inside a project.',
+  editScreen: 'Edit screen'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

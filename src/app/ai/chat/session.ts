@@ -12,6 +12,7 @@ import { AgentSetupError, assertAgentReady } from '@/app/ai/agents/setup/readine
 import { classifyAIChatError, type AIChatFailure } from '@/app/ai/chat/failure'
 import { notifyReplyEnded } from '@/app/ai/chat/notifications'
 import { hasSteeringMessage } from '@/app/ai/chat/queue'
+import { screenFolder } from '@/app/ai/chat/screen-task'
 import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt'
 import { chatThinkingLevel } from '@/app/ai/chat/thinking'
 import { createAIModelRuntime, resolveModelConnectionAPIKey } from '@/app/ai/models'
@@ -64,10 +65,11 @@ export async function createACPTransport(
   if (!agentDef) throw new Error(`Unknown ACP agent: ${providerID}`)
 
   // A folder of its own, not the home folder, whose project settings the agent would read.
-  // Claude keeps its sessions per folder, so resuming one needs the same folder every time.
+  // Claude keeps its sessions per folder, so resuming one needs the same folder every time. A
+  // screen that asked for a copy has a folder of its own, and the agent works there instead.
   return new ACPChatTransport({
     agentDef,
-    cwd: await agentWorkspace(),
+    cwd: screenFolder() ?? (await agentWorkspace()),
     store,
     onUsage,
     resume: agentSession?.resume ?? null,

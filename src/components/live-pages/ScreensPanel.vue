@@ -6,6 +6,8 @@ import { shownStatusState } from '@open-pencil/scene-graph/statuses'
 import { useLivePageMessages } from '@open-pencil/vue/i18n'
 import { vTestId } from '@open-pencil/vue/testing'
 
+import { showChatPanel } from '@/app/ai/chat/panel'
+import { startScreenTask } from '@/app/ai/chat/screen-task'
 import { useEditorStore } from '@/app/editor/active-store'
 import { focusNodes } from '@/app/editor/selection/focus'
 import { listGitBranches } from '@/app/integrations/git/client'
@@ -15,6 +17,7 @@ import {
   createScreenCopy,
   pluginDataWithScreenCopy,
   readScreenCopy,
+  screenTaskPrompt,
   type ScreenCopy
 } from '@/app/live-pages/copies'
 import { usePageDrift } from '@/app/live-pages/drift/use'
@@ -176,6 +179,17 @@ function copyLabel(screen: Screen): string {
 }
 
 /**
+ * Hand the screen's copy to the chat: the coding agent starts in the copy's folder and is asked
+ * to change that screen alone, with the task waiting in the composer to be sent.
+ */
+function editScreen(screen: Screen): void {
+  const copy = copyOf(screen)
+  if (copy === null) return
+  startScreenTask({ folder: copy.path, prompt: screenTaskPrompt(screen, copy) })
+  showChatPanel()
+}
+
+/**
  * Give a screen a copy of its own: a branch beside the one a person is on, made without switching,
  * so the work on that screen lands there and comes back as a patch.
  */
@@ -319,6 +333,17 @@ function dotStyle(screen: Screen) {
           <span v-else-if="screen.nodeId === null" class="shrink-0 text-3xs text-muted">
             {{ messages.screenNotOpen }}
           </span>
+
+          <button
+            v-if="copyOf(screen) !== null"
+            type="button"
+            class="shrink-0 rounded p-0.5 text-muted opacity-0 hover:text-surface focus-visible:opacity-100 group-hover/screen:opacity-100"
+            :aria-label="messages.editScreen"
+            v-test-id="`screens-edit-${screen.path}`"
+            @click.stop="editScreen(screen)"
+          >
+            <icon-lucide-pencil-line class="size-3" />
+          </button>
 
           <button
             v-if="copyOf(screen) === null && repository !== null && screen.nodeId !== null"

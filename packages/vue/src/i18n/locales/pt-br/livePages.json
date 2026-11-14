@@ -50,5 +50,6 @@
   "filterChanged": "Alteradas",
   "copyScreen": "Criar uma cópia",
   "copyFailed": "Não foi possível criar a cópia. Verifique se o repositório do projeto está legível.",
-  "copyNoRepository": "Uma cópia precisa de um documento salvo dentro de um projeto."
+  "copyNoRepository": "Uma cópia precisa de um documento salvo dentro de um projeto.",
+  "editScreen": "Editar tela"
 }

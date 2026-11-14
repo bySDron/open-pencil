@@ -102,3 +102,17 @@ export function readScreenCopy(node: SceneNode): ScreenCopy | null {
 export function pluginDataWithScreenCopy(node: SceneNode, copy: ScreenCopy | null) {
   return withPluginData(node.pluginData, OPEN_PENCIL_PLUGIN_DATA.screenCopy, copy ?? undefined)
 }
+
+/**
+ * What the chat is asked to do for one screen: change the page its frame shows, in the copy's own
+ * folder, and leave every other screen alone. Written for the agent, so it stays in English.
+ */
+export function screenTaskPrompt(screen: Screen, copy: ScreenCopy): string {
+  return [
+    `Work only inside this folder: ${copy.path}`,
+    `It is a copy of the application's screen "${screen.name}" (${screen.path}) on branch ${copy.branch}.`,
+    'Change what that screen needs, and nothing else: no other screen and no shared layout unless',
+    'the screen cannot be fixed without it — if that is the case, say so before changing it.',
+    'When you are done, summarize what changed in a few lines.'
+  ].join('\n')
+}

@@ -50,5 +50,6 @@
   "filterChanged": "Geändert",
   "copyScreen": "Eine Kopie erstellen",
   "copyFailed": "Die Kopie konnte nicht erstellt werden. Prüfe, ob das Repository des Projekts lesbar ist.",
-  "copyNoRepository": "Eine Kopie braucht ein Dokument, das in einem Projekt gespeichert ist."
+  "copyNoRepository": "Eine Kopie braucht ein Dokument, das in einem Projekt gespeichert ist.",
+  "editScreen": "Bildschirm bearbeiten"
 }
