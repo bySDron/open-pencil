@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { imageDataURL } from '@open-pencil/scene-graph/images'
 
 import { desktopPageCapture, isLoopbackAddress } from './drift/capture'
+import type { PageCapture } from './drift/run'
 
 /**
  * Small pictures of the screens, so the list can be read by eye.
@@ -39,7 +40,8 @@ export function isFresh(thumbnail: ScreenThumbnail, now = Date.now()): boolean {
  * The pictures of the screens, by the address of the page they show. Asking twice for one page is
  * one picture, and a page off this machine is never asked for at all.
  */
-export function useScreenThumbnails(capture = desktopPageCapture()) {
+/** The cache one caller keeps, which a test builds with a capture of its own. */
+export function createScreenThumbnails(capture: PageCapture) {
   const pictures = ref<Record<string, ScreenThumbnail>>({})
   const waiting = ref<Record<string, true>>({})
   const queue: string[] = []
@@ -112,11 +114,18 @@ export function useScreenThumbnails(capture = desktopPageCapture()) {
     pictures.value = kept
   }
 
-  return {
-    pictures: computed(() => pictures.value),
-    thumbnailOf,
-    pendingOf,
-    request,
-    forget
-  }
+  return { pictures: computed(() => pictures.value), thumbnailOf, pendingOf, request, forget }
 }
+
+/**
+ * The pictures the whole application shares. A screen's picture is taken once however many parts of
+ * the window ask for it, and a frame that reloads can drop the one it had.
+ */
+const shared = createScreenThumbnails(desktopPageCapture())
+
+export function useScreenThumbnails() {
+  return shared
+}
+
+/** The shared cache, for the parts of the window that only forget a picture. */
+export const screenThumbnails = shared

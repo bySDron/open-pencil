@@ -6,7 +6,7 @@ import { imageDataURL } from '@open-pencil/scene-graph/images'
 import { asDouble } from '@open-pencil/test-support/doubles'
 
 import type { PageCapture } from '@/app/live-pages/drift/run'
-import { THUMBNAIL_TTL_MS, isFresh, useScreenThumbnails } from '@/app/live-pages/thumbnails'
+import { THUMBNAIL_TTL_MS, createScreenThumbnails, isFresh } from '@/app/live-pages/thumbnails'
 
 /** A one-pixel PNG, which is enough for a test that only asks whether a picture arrived. */
 const PIXEL =
@@ -31,7 +31,7 @@ function settle(): Promise<void> {
 
 test('a picture kept for a page is a picture the list shows', async () => {
   const { page } = capture()
-  const thumbs = useScreenThumbnails(page)
+  const thumbs = createScreenThumbnails(page)
 
   thumbs.request('http://localhost:3000/pricing')
   await settle()
@@ -43,7 +43,7 @@ test('a picture kept for a page is a picture the list shows', async () => {
 
 test('a page is drawn once, however many rows ask for it', async () => {
   const { asked, page } = capture()
-  const thumbs = useScreenThumbnails(page)
+  const thumbs = createScreenThumbnails(page)
 
   thumbs.request('http://localhost:3000/pricing')
   thumbs.request('http://localhost:3000/pricing')
@@ -56,7 +56,7 @@ test('a page is drawn once, however many rows ask for it', async () => {
 
 test('a page off this machine is never drawn', async () => {
   const { asked, page } = capture()
-  const thumbs = useScreenThumbnails(page)
+  const thumbs = createScreenThumbnails(page)
 
   thumbs.request('https://example.com/pricing')
   await settle()
@@ -74,7 +74,7 @@ test('a kept picture is fresh for ten minutes and stale after that', () => {
 
 test('a stale picture is drawn again when its page is asked for', async () => {
   const { asked, page } = capture()
-  const thumbs = useScreenThumbnails(page)
+  const thumbs = createScreenThumbnails(page)
   thumbs.request('http://localhost:3000/pricing')
   await settle()
 
@@ -88,7 +88,7 @@ test('a stale picture is drawn again when its page is asked for', async () => {
 
 test('a page that will not be drawn leaves the list a row without a picture', async () => {
   const failed: PageCapture = asDouble<PageCapture>(async () => null)
-  const thumbs = useScreenThumbnails(failed)
+  const thumbs = createScreenThumbnails(failed)
 
   thumbs.request('http://localhost:3000/pricing')
   await settle()

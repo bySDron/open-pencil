@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/inspect-bridge'
 import type { PagePlacement } from '@/app/live-pages/placement'
 import type { LivePage } from '@/app/live-pages/schema'
+import { screenThumbnails } from '@/app/live-pages/thumbnails'
 
 /**
  * One page of the running application, drawn over the canvas: the frame's own layers stay under
@@ -57,6 +58,14 @@ watch(
   () => picking,
   (on) => {
     sendToPage(nodeId, { type: on ? 'start' : 'stop' })
+  }
+)
+
+// A reloaded page is a different page: the picture the list kept of it was of the old one.
+watch(
+  () => revision,
+  () => {
+    screenThumbnails.forget(page.url)
   }
 )
 </script>
