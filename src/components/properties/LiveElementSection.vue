@@ -7,7 +7,7 @@ import { showChatPanel } from '@/app/ai/chat/panel'
 import { startScreenTask } from '@/app/ai/chat/screen-task'
 import { useEditorStore } from '@/app/editor/active-store'
 import { listGitBranches } from '@/app/integrations/git/client'
-import { applyElementToCode, elementInstruction } from '@/app/live-pages/apply'
+import { applyElementToCode, elementInstruction, screenOutline } from '@/app/live-pages/apply'
 import { createScreenCopy } from '@/app/live-pages/copies'
 import type { LiveStyleKey } from '@/app/live-pages/inspect'
 import { LIVE_STYLE_KEYS, selectorOf } from '@/app/live-pages/inspect'
@@ -133,7 +133,9 @@ async function applyToCode(): Promise<void> {
     const element = {
       selector: selector.value,
       componentFile: current.node.component?.file ?? null,
-      changed: changed.value
+      changed: changed.value,
+      // The page's own structure, so the agent reads it in the words the source uses.
+      outline: screenOutline(pageTrees()[current.nodeId] ?? [])
     }
     const applied = await applyElementToCode(
       store,

@@ -8,6 +8,8 @@ import {
   type createScreenCopy,
   type ScreenCopy
 } from './copies'
+import { selectorOf } from './inspect'
+import type { PageNode } from './inspect-protocol'
 import { readLivePage } from './schema'
 import type { Screen } from './screens'
 
@@ -69,6 +71,7 @@ export function elementInstruction(element: {
   selector: string
   componentFile: string | null
   changed: string
+  outline?: string
 }): string {
   const lines = [
     `The element \`${element.selector}\` was changed in the browser to: ${element.changed}.`,
@@ -78,7 +81,27 @@ export function elementInstruction(element: {
     'Make that change in the element’s own source, and only there: a style or a class of that element, not a global one.',
     'Say which file you changed and why the element you picked is that one.'
   ]
-  return lines.filter((line) => line !== '').join(' ')
+  if (element.outline !== undefined && element.outline !== '') {
+    lines.push(`The page's own outline, with each element's box in pixels:\n${element.outline}`)
+  }
+  return lines.filter((line) => line !== '').join('\n')
+}
+
+/**
+ * The elements of a page as an agent reads them: one line each, indented by depth, named by their
+ * selector, with their box. A picture tells an agent nothing it can search for; this is the page's
+ * structure in the words the source uses.
+ */
+export function screenOutline(nodes: readonly PageNode[], limit = 40): string {
+  return nodes
+    .slice(0, limit)
+    .map((node) => {
+      const name = selectorOf(node)
+      const words = node.text === '' ? '' : ` “${node.text}”`
+      const box = `(${Math.round(node.rect.x)},${Math.round(node.rect.y)} ${Math.round(node.rect.width)}×${Math.round(node.rect.height)})`
+      return `${'  '.repeat(node.depth)}- ${name}${words} ${box}`
+    })
+    .join('\n')
 }
 
 /** What handing a change over produced: the copy the work lands in, and the task to send. */
@@ -117,7 +140,7 @@ export async function applyElementToCode(
   options: {
     repository: string | null
     nodeId: string
-    element: { selector: string; componentFile: string | null; changed: string }
+    element: { selector: string; componentFile: string | null; changed: string; outline?: string }
   },
   deps: ApplyElementDeps
 ): Promise<AppliedElement | null> {

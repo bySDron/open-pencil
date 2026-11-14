@@ -8,11 +8,13 @@ import {
   applyElementToCode,
   elementInstruction,
   screenOfFrame,
+  screenOutline,
   type ApplyElementDeps,
   type ApplyElementEditor
 } from '@/app/live-pages/apply'
 import type { ScreenCopy } from '@/app/live-pages/copies'
 import { pluginDataWithScreenCopy } from '@/app/live-pages/copies'
+import type { PageNode } from '@/app/live-pages/inspect-protocol'
 
 const copy: ScreenCopy = {
   branch: 'op/sales-pricing-2026-11-14',
@@ -61,10 +63,12 @@ function deps(made: 'ok' | 'failed' = 'ok') {
       listed.push('asked')
       return ['main', 'op/sales-pricing-2026-11-14']
     },
-    createCopy: asDouble<ApplyElementDeps['createCopy']>(async (repository: string, screen: { path: string }, taken: readonly string[]) => {
-      created.push({ repository, path: screen.path, branches: [...taken] })
-      return made === 'ok' ? { ok: true, value: copy } : { ok: false, error: 'git refused' }
-    })
+    createCopy: asDouble<ApplyElementDeps['createCopy']>(
+      async (repository: string, screen: { path: string }, taken: readonly string[]) => {
+        created.push({ repository, path: screen.path, branches: [...taken] })
+        return made === 'ok' ? { ok: true, value: copy } : { ok: false, error: 'git refused' }
+      }
+    )
   }
   return { outside, created, listed }
 }
@@ -160,5 +164,71 @@ describe('handing an element change to the agent', () => {
     expect(
       await applyElementToCode(editor, { repository: null, nodeId, element }, deps().outside)
     ).toBeNull()
+  })
+})
+
+describe('the outline an agent reads instead of a picture', () => {
+  /** One element of a page, as the inspector describes it. */
+  function node(overrides: Partial<PageNode>): PageNode {
+    return {
+      id: '0',
+      parentId: null,
+      depth: 0,
+      tag: 'div',
+      classes: [],
+      text: '',
+      rect: { x: 0, y: 0, width: 100, height: 20 },
+      component: null,
+      ...overrides
+    }
+  }
+
+  test('each element is one line, indented by depth, named and sized', () => {
+    const outline = screenOutline([
+      node({ id: '0', tag: 'body', rect: { x: 0, y: 0, width: 1440, height: 900 } }),
+      node({ id: '1', parentId: '0', depth: 1, tag: 'div', classes: ['card'] }),
+      node({
+        id: '2',
+        parentId: '1',
+        depth: 2,
+        tag: 'button',
+        classes: ['rp-button'],
+        text: 'Save'
+      })
+    ])
+
+    expect(outline.split('\n')).toEqual([
+      '- body (0,0 1440×900)',
+      '  - div.card (0,0 100×20)',
+      '    - button.rp-button “Save” (0,0 100×20)'
+    ])
+  })
+
+  test('a long page is cut to what the agent can use', () => {
+    const nodes = Array.from({ length: 60 }, (_, index) => node({ id: String(index) }))
+
+    expect(screenOutline(nodes).split('\n')).toHaveLength(40)
+  })
+
+  test('the task carries the outline when the page gave one', () => {
+    const instruction = elementInstruction({
+      selector: 'button',
+      componentFile: null,
+      changed: 'padding: 4px',
+      outline: '- body (0,0 10×10)'
+    })
+
+    expect(instruction).toContain('outline')
+    expect(instruction).toContain('- body (0,0 10×10)')
+  })
+
+  test('a change with no outline reads as it did before', () => {
+    const instruction = elementInstruction({
+      selector: 'button',
+      componentFile: null,
+      changed: 'x'
+    })
+
+    expect(instruction).not.toContain('outline')
   })
 })
