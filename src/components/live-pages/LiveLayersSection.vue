@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { useLivePageMessages } from '@open-pencil/vue/i18n'
 import { vTestId } from '@open-pencil/vue/testing'
@@ -103,6 +103,36 @@ function rowClass(node: PageNode): string {
   ].join(' ')
 }
 
+/** The rows on screen, so the row of an element picked in the page can be brought into sight. */
+const rows = new Map<string, HTMLElement>()
+
+function keepRow(id: string, element: unknown): void {
+  if (element instanceof HTMLElement) rows.set(id, element)
+  else rows.delete(id)
+}
+
+/** Open the elements above one, which a row picked in the page needs to be shown at all. */
+function openAncestors(id: string): void {
+  const next = new Set(collapsed.value)
+  let parent = byId.value.get(id)?.parentId ?? null
+  let guard = 0
+  while (parent !== null && guard < 64) {
+    next.delete(parent)
+    parent = byId.value.get(parent)?.parentId ?? null
+    guard += 1
+  }
+  collapsed.value = next
+}
+
+// The page and the list describe one element: an element picked inside the page is the row the
+// list shows as selected, which a person finds by looking left rather than by scrolling for it.
+watch(pickedId, async (id) => {
+  if (id === '') return
+  openAncestors(id)
+  await nextTick()
+  rows.get(id)?.scrollIntoView({ block: 'nearest' })
+})
+
 function labelOf(node: PageNode): string {
   return node.text === '' ? selectorOf(node) : node.text
 }
@@ -137,6 +167,7 @@ function labelOf(node: PageNode): string {
         tabindex="0"
         :class="rowClass(node)"
         :style="{ paddingInlineStart: `${4 + node.depth * 10}px` }"
+        :ref="(element) => keepRow(node.id, element)"
         v-test-id="`live-layer-${node.id}`"
         @click="select(node)"
         @keydown.enter.prevent="select(node)"

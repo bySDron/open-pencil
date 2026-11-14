@@ -275,7 +275,8 @@
     if (!element) return
     event.preventDefault()
     event.stopPropagation()
-    picking = false
+    // The mode stays on: a person picks one element, changes it, and picks the next one beside it.
+    // The app turns the mode off when it wants clicks to reach the page again.
     place(hoverBox, null)
     pick(element)
   }
