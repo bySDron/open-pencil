@@ -36,6 +36,18 @@ const source = useLivePagesSource()
 const store = useEditorStore()
 const { picked, styles, written, clearPick, setPickedStyle, resetPickedStyles } = useLivePick()
 
+/**
+ * Whether the picked element belongs to the layer the canvas has selected. An element of another
+ * screen is not this screen's business: showing its values here would edit a page the panel does
+ * not describe.
+ */
+const showing = computed(() => {
+  const current = picked.value
+  if (current === null) return false
+  void store.state.sceneVersion
+  return store.state.selectedIds.has(current.nodeId)
+})
+
 /** Whether the change is being handed over, so one press is one task. */
 const applying = ref(false)
 
@@ -200,7 +212,7 @@ async function applyToCode(): Promise<void> {
 </script>
 
 <template>
-  <PanelSection v-if="picked" :label="messages.elementTitle">
+  <PanelSection v-if="picked && showing" :label="messages.elementTitle">
     <template #actions>
       <IconButton
         :label="messages.elementReset"

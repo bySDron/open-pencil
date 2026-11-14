@@ -282,6 +282,13 @@
         if (element) pick(element, true)
         break
       }
+      case 'pickSelector': {
+        // A page that has reloaded is a new document: the element a person had picked is found
+        // again by its own name, so the panel keeps describing the thing they chose.
+        const found = document.querySelector(data.selector)
+        if (found) pick(found, true)
+        break
+      }
       case 'style':
         applyStyle(data.key, data.value)
         break

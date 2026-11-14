@@ -13,3 +13,17 @@
 
 /// The inspector's own source, embedded so a release build needs no file beside the binary.
 pub const RUNTIME: &str = include_str!("runtime.js");
+
+#[cfg(test)]
+mod tests {
+    use super::RUNTIME;
+
+    #[test]
+    fn the_runtime_is_a_script_that_answers_the_window() {
+        // A build that lost the file would embed an empty script and every frame would stay dumb.
+        assert!(RUNTIME.len() > 1000);
+        assert!(RUNTIME.contains("__openPencilInspectInstalled"));
+        assert!(RUNTIME.contains("open-pencil-host"));
+        assert!(RUNTIME.contains("open-pencil-inspect"));
+    }
+}

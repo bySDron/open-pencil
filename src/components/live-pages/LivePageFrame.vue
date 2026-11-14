@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import { selectorOf } from '@/app/live-pages/inspect'
 import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/inspect-bridge'
+import { pickedElement } from '@/app/live-pages/pick'
 import type { PagePlacement } from '@/app/live-pages/placement'
 import type { LivePage } from '@/app/live-pages/schema'
 import { screenThumbnails } from '@/app/live-pages/thumbnails'
@@ -52,6 +54,12 @@ onBeforeUnmount(() => {
 function announce(): void {
   register()
   sendToPage(nodeId, { type: 'ping' })
+  // The page drew itself again: the element a person had picked is found by its own name, so the
+  // panel keeps describing the thing they chose rather than forgetting it on every reload.
+  const current = pickedElement.value
+  if (current !== null && current.nodeId === nodeId) {
+    sendToPage(nodeId, { type: 'pickSelector', selector: selectorOf(current.node) })
+  }
 }
 
 watch(

@@ -63,6 +63,8 @@ function page() {
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
     elementFromPoint: () => button,
+    // A page that reloaded is asked for the element by its own name.
+    querySelector: (selector: string) => (selector.startsWith('button') ? button : null),
     defaultView: null
   }
   const window = {
@@ -120,6 +122,18 @@ test('selecting an element of the page answers with its node and its values', ()
   expect(picked.pick.node.tag).toBe('button')
   expect(picked.pick.styles.padding).toBe('16px')
   // An element picked from a list is brought into view, since a person may be looking elsewhere.
+  expect(subject.revealed).toEqual(['BUTTON'])
+})
+
+test('a page that reloaded finds again the element a person had picked', () => {
+  const subject = page()
+
+  subject.ask({ type: 'pickSelector', selector: 'button.rp-button.wide' })
+
+  const picked = readInspectMessage(subject.posted.at(-1))
+  expect(picked?.type).toBe('picked')
+  if (picked?.type !== 'picked') throw new Error('the page answered no pick')
+  expect(picked.pick.node.tag).toBe('button')
   expect(subject.revealed).toEqual(['BUTTON'])
 })
 

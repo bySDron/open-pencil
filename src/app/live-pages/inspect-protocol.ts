@@ -51,6 +51,8 @@ export type InspectRequest =
   | { type: 'stop' }
   | { type: 'tree' }
   | { type: 'select'; id: string }
+  /** Find an element again by its own name, which a page that reloaded has to do. */
+  | { type: 'pickSelector'; selector: string }
   | { type: 'style'; key: LiveStyleKey; value: string }
   | { type: 'reset' }
   | { type: 'clear' }
