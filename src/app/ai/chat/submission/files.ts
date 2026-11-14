@@ -2,10 +2,7 @@ import type { FileUIPart } from 'ai'
 
 import { imageDataURL } from '@open-pencil/scene-graph/images'
 
-import type {
-  ImageAttachmentDraft,
-  PreparedImageAttachment
-} from '@/app/ai/attachment/image/types'
+import type { ImageAttachmentDraft, PreparedImageAttachment } from '@/app/ai/attachment/image/types'
 
 /**
  * The pictures of a message as the parts a model that reads images receives. The bytes travel as
