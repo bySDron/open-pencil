@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
+import { useEventListener, useElementSize } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 import { resolveEditorProfile, type EditorProfileInputs, type EditorState } from '@open-pencil/core'
@@ -19,6 +19,7 @@ import {
 import { layerTransform } from '@/app/live-pages/placement'
 import { useLivePageSelection } from '@/app/live-pages/selection'
 import { useLivePages } from '@/app/live-pages/use'
+import { screensInView } from '@/app/live-pages/visibility'
 
 import LivePageFrame from './LivePageFrame.vue'
 
@@ -140,6 +141,24 @@ function forwardWheel(event: WheelEvent) {
   event.preventDefault()
   canvas.dispatchEvent(new WheelEvent(event.type, event))
 }
+
+const size = useElementSize(root)
+
+/** The screens of this layer as the canvas places them, which is what decides what they cost. */
+const screens = computed(() =>
+  pages.value.map((entry) => {
+    const at = placementOf(entry)
+    return { nodeId: entry.nodeId, at: { x: at.left, y: at.top }, width: at.width, height: at.height }
+  })
+)
+
+/** The screens that run, and the ones drawn as themselves while the rest show their pictures. */
+const visibility = computed(() =>
+  screensInView(screens.value, placement.value, {
+    width: size.width.value,
+    height: size.height.value
+  })
+)
 </script>
 
 <template>
@@ -159,6 +178,8 @@ function forwardWheel(event: WheelEvent) {
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
         :picking="isPicking"
+        :running="visibility.running.has(entry.nodeId)"
+        :awake="visibility.shown.has(entry.nodeId)"
       />
     </div>
   </div>

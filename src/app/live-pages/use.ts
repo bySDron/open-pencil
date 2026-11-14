@@ -104,6 +104,18 @@ export function useLivePages(options: { pageId?: () => string } = {}) {
     reloads[nodeId] = (reloads[nodeId] ?? 0) + 1
   }
 
+  /**
+   * Show a page live or as the picture of it. A page drawn live is its own application, with its own
+   * scripts and its own memory: twenty of them on one canvas cost twenty applications, which is what
+   * a person feels while zooming. A picture costs an image, so a screen is a picture until somebody
+   * works on it.
+   */
+  function setMode(nodeId: string, mode: LivePage['mode']): void {
+    const page = pageOf(nodeId)
+    if (page === null || page.mode === mode) return
+    setPage(nodeId, { ...page, mode })
+  }
+
   function reloadAll(): void {
     for (const entry of pages.value) reload(entry.nodeId)
   }
@@ -112,7 +124,7 @@ export function useLivePages(options: { pageId?: () => string } = {}) {
     return reloads[nodeId] ?? 0
   }
 
-  return { pages, placementOf, pageOf, setPage, link, reload, reloadAll, revisionOf }
+  return { pages, placementOf, pageOf, setPage, setMode, link, reload, reloadAll, revisionOf }
 }
 
 export type LivePages = ReturnType<typeof useLivePages>
