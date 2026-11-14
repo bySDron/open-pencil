@@ -7,6 +7,8 @@ import { showChatPanel } from '@/app/ai/chat/panel'
 import { startScreenTask } from '@/app/ai/chat/screen-task'
 import type { LiveStyleKey } from '@/app/live-pages/inspect'
 import { LIVE_STYLE_KEYS, selectorOf } from '@/app/live-pages/inspect'
+import { pageTrees, sendToPage } from '@/app/live-pages/inspect-bridge'
+import type { PageNode } from '@/app/live-pages/inspect-protocol'
 import { useLivePagesSource } from '@/app/live-pages/open'
 import { useLivePick } from '@/app/live-pages/pick'
 import AppButton from '@/components/ui/button/AppButton.vue'
@@ -19,11 +21,45 @@ import PanelSection from '@/components/ui/panel/PanelSection.vue'
  * a drawn layer has, read from the page itself rather than from the design. A value is written on
  * the element the moment it is committed, so the page shows the change without a reload; the
  * source of that element is where it has to live, which the one action hands to the agent.
+ *
+ * The chain above the element is what a page usually needs: the box that is really in charge of a
+ * layout is rarely the one under the pointer, so every ancestor is one click away.
  */
 const messages = useLivePageMessages()
 const panels = usePanelMessages()
 const source = useLivePagesSource()
 const { picked, styles, written, clearPick, setPickedStyle, resetPickedStyles } = useLivePick()
+
+/** The elements of the page the picked one belongs to, by id. */
+const tree = computed<Map<string, PageNode>>(() => {
+  const nodeId = picked.value?.nodeId
+  const nodes = nodeId === undefined ? [] : (pageTrees()[nodeId] ?? [])
+  return new Map(nodes.map((node) => [node.id, node]))
+})
+
+/** The picked element and the elements it sits in, from the page down to the root. */
+const chain = computed<PageNode[]>(() => {
+  const current = picked.value
+  if (current === null) return []
+  const path: PageNode[] = [{ ...current.node, id: current.node.id }]
+  let parent = current.node.parentId
+  let guard = 0
+  while (parent !== null && guard < 64) {
+    const found = tree.value.get(parent)
+    if (found === undefined) break
+    path.unshift(found)
+    parent = found.parentId
+    guard += 1
+  }
+  return path
+})
+
+/** Pick an ancestor, so a layout that misbehaves is found by walking up instead of guessing. */
+function selectAncestor(node: PageNode): void {
+  const nodeId = picked.value?.nodeId
+  if (nodeId === undefined || node.id === '') return
+  sendToPage(nodeId, { type: 'select', id: node.id })
+}
 
 /** The rows the panel shows, in the order it shows them, with the words of the design panel. */
 const fields = computed<{ key: LiveStyleKey; label: string }[]>(() => [
@@ -113,6 +149,30 @@ function applyToCode(): void {
         <icon-lucide-x class="size-3.5" />
       </IconButton>
     </template>
+
+    <!-- A layout is usually set by a box above the one under the pointer: every ancestor is a press. -->
+    <div
+      v-if="chain.length > 1"
+      class="mb-1 flex flex-wrap items-center gap-0.5"
+      data-test-id="live-element-chain"
+    >
+      <template v-for="(node, index) in chain" :key="node.id">
+        <icon-lucide-chevron-right
+          v-if="index > 0"
+          class="size-2.5 shrink-0 text-muted"
+          data-direction="reading"
+        />
+        <button
+          type="button"
+          class="max-w-24 truncate rounded px-1 text-3xs"
+          :class="index === chain.length - 1 ? 'text-surface' : 'text-muted hover:text-surface'"
+          @click="selectAncestor(node)"
+        >
+          {{ node.tag
+          }}<span v-if="node.classes.length" class="text-muted">.{{ node.classes[0] }}</span>
+        </button>
+      </template>
+    </div>
 
     <div class="flex items-baseline gap-1.5">
       <code class="min-w-0 flex-1 truncate text-2xs text-surface" data-test-id="live-element-name">
