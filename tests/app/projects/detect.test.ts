@@ -71,16 +71,16 @@ test('the dev script wins over start, and its port becomes the start URL', async
   const project = projectOf(await detectProject(io, 'D:/app'))
 
   expect(project.startCommand).toBe('vite --port 5173')
-  expect(project.startUrl).toBe('http://127.0.0.1:5173')
+  expect(project.startUrl).toBe('http://localhost:5173')
   expect(project.name).toBe('my-app')
 })
 
 test('the port a command names is read in the forms dev servers take it', async () => {
   const cases = [
-    ['vite --port 5173', 'http://127.0.0.1:5173'],
-    ['vite --port=4000', 'http://127.0.0.1:4000'],
-    ['next dev -p 3001', 'http://127.0.0.1:3001'],
-    ['PORT=8080 node server.js', 'http://127.0.0.1:8080'],
+    ['vite --port 5173', 'http://localhost:5173'],
+    ['vite --port=4000', 'http://localhost:4000'],
+    ['next dev -p 3001', 'http://localhost:3001'],
+    ['PORT=8080 node server.js', 'http://localhost:8080'],
     ['vite', '']
   ] as const
 
@@ -150,7 +150,7 @@ test("the picked folder's port becomes the start URL", async () => {
   const project = projectOf(await detectProject(io, 'D:/app/web'))
 
   expect(project.appDirectory).toBe('web')
-  expect(project.startUrl).toBe('http://127.0.0.1:5175')
+  expect(project.startUrl).toBe('http://localhost:5175')
 })
 
 test("the root's application wins over the picked folder's", async () => {

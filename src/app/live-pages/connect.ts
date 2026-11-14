@@ -3,8 +3,8 @@ import { computed, ref, shallowRef } from 'vue'
 import { importProject, type ProjectImportOutcome } from '@/app/projects/import'
 import { desktopProjectImport } from '@/app/projects/pick'
 import {
-  applicationAddress,
   ensureProjectRun,
+  printedAddress,
   projectRun,
   type ProjectRunState
 } from '@/app/projects/runner'
@@ -12,6 +12,7 @@ import type { Project } from '@/app/projects/schema'
 import { useProjects } from '@/app/projects/store'
 import { canRunHostProcesses } from '@/app/tauri/capabilities'
 
+import { reachableAddress } from './address'
 import type { LivePagesSource } from './open'
 
 /** How far a connection has come, which the panel says in its own words as it goes. */
@@ -42,18 +43,27 @@ export type ScreensConnectionIo = {
   startApplication: (project: Project) => Promise<void>
   /** The address the application answers on, or empty when it never said. */
   waitForAddress: (project: Project, budgetMs?: number) => Promise<string>
+  /** The spelling of an address that answers, or empty when none does. */
+  reachable?: (address: string) => Promise<string>
 }
 
 /** How long a dev server has to name its address before the connection gives up on it. */
 export const ADDRESS_BUDGET_MS = 90_000
+/**
+ * How long a project whose command already named a port is given to announce its own address.
+ * The guess is a fallback for a server started elsewhere; a server this panel started says which
+ * loopback it took in its first seconds, and the guess may well name the other one.
+ */
+export const KNOWN_PORT_BUDGET_MS = 12_000
 
 /** How often the run's own output is read while waiting for an address. */
 const ADDRESS_STEP_MS = 250
 
 /**
- * The address a project's application answers on, once it has said so. A project whose command
- * names its port already knows; any other dev server prints its address when it is ready, and a
- * run that failed or exited stops the wait rather than holding the panel for the whole budget.
+ * The address a project's application answers on, once it has said so. A dev server prints the
+ * address it really bound, and that is the address a page can be opened at; a project whose
+ * command only named a port has a guess to fall back on, and a run that failed or exited stops
+ * the wait rather than holding the panel for the whole budget.
  */
 export async function waitForApplicationAddress(
   project: Project,
@@ -63,12 +73,10 @@ export async function waitForApplicationAddress(
   const run = projectRun(project.id)
   const deadline = Date.now() + budgetMs
   for (;;) {
-    const address = applicationAddress(project, run.output.value)
+    const address = printedAddress(run.output.value)
     if (address !== '') return address
     const state: ProjectRunState = run.state.value
-    if (state === 'failed' || state === 'stopped') return ''
-    // A project nothing was started for never prints an address, so waiting would only be quiet.
-    if (state === 'idle') return ''
+    if (state === 'failed' || state === 'stopped' || state === 'idle') return ''
     if (Date.now() >= deadline) return ''
     await new Promise((resolve) => {
       setTimeout(resolve, stepMs)
@@ -89,7 +97,12 @@ export function desktopScreensConnection(): ScreensConnectionIo {
       if (!canRunHostProcesses()) return
       await ensureProjectRun(project)
     },
-    waitForAddress: (project, budgetMs) => waitForApplicationAddress(project, budgetMs)
+    waitForAddress: (project, budgetMs) =>
+      waitForApplicationAddress(
+        project,
+        budgetMs ?? (project.startUrl.trim() === '' ? ADDRESS_BUDGET_MS : KNOWN_PORT_BUDGET_MS)
+      ),
+    reachable: (address) => reachableAddress(address)
   }
 }
 
@@ -133,10 +146,10 @@ export function useScreensConnection(
     phase.value = 'starting'
     if (canStart) await io.startApplication(target)
     phase.value = 'waiting'
-    const address =
-      target.startUrl.trim() !== '' || !canStart
-        ? target.startUrl.trim() || fallbackAddress
-        : (await io.waitForAddress(target)) || fallbackAddress
+    // The server's own announcement first, since only it knows which loopback it took; a guess
+    // from the command line is what a project that started elsewhere has.
+    const announced = canStart ? await io.waitForAddress(target) : ''
+    const address = announced || target.startUrl.trim() || fallbackAddress
     if (address === '') {
       failure.value = 'no-address'
       phase.value = 'failed'
@@ -149,10 +162,19 @@ export function useScreensConnection(
       phase.value = 'failed'
       return false
     }
-    const opened = source.openAll(routes, address)
-    phase.value = opened === 0 ? 'failed' : 'done'
-    if (opened === 0) failure.value = 'no-address'
-    return opened > 0
+    // The address a page is opened at has to be one that answers: a dev server binds one loopback
+    // spelling, and the other one is a connection that never opens.
+    const reachable = io.reachable === undefined ? address : await io.reachable(address)
+    if (reachable === '') {
+      failure.value = 'no-address'
+      phase.value = 'failed'
+      return false
+    }
+    // Pages already on the canvas follow the application to where it answers now.
+    source.realign(reachable)
+    source.openAll(routes, reachable)
+    phase.value = 'done'
+    return true
   }
 
   /** Pick the folder of a project, name it in the document, and show its screens. */

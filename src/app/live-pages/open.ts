@@ -5,11 +5,14 @@ import { readRepositoryRoot, runGit } from '@/app/integrations/git/client'
 import { createProject, normalizePath, type Project } from '@/app/projects/schema'
 import { useProjects } from '@/app/projects/store'
 
+import { relocatedPage } from './address'
 import { areaOf, groupByArea } from './areas'
 import { readDocumentProject, writeDocumentProject, type DocumentProject } from './bind'
+import { pageOrigin } from './bridge'
 import { layoutGroups } from './grid'
 import { fillRoute, pagePaths, routeURL, routesFromFiles, type RouteInfo } from './routes'
-import { normalizeLiveURL, pageLabel, pluginDataWithLivePage } from './schema'
+import { normalizeLiveURL, pageLabel, pluginDataWithLivePage, type LivePage } from './schema'
+import { useLivePages } from './use'
 
 /** The frame one page opens in; a page is a desktop screen until it is resized. */
 export const PAGE_WIDTH = 1440
@@ -100,7 +103,12 @@ export function useLivePagesSource() {
     // the page really has, or none at all.
     const address = normalizeLiveURL(base)
     if (address === '' || routes.length === 0) return 0
-    const pages = openedPages(routes, address, params)
+    // A page the canvas already holds is not opened a second time: the panel asks for what is
+    // missing, and a second press of "show all" must not lay a second copy beside the first.
+    const known = new Set(useLivePages().pages.value.map((entry) => canonicalURL(entry.page.url)))
+    const pages = openedPages(routes, address, params).filter(
+      (page) => !known.has(canonicalURL(page.url))
+    )
     if (pages.length === 0) return 0
     const groups = groupByArea(pages, (page) => areaOf(page.path))
     // Sections and the pages inside them come out in the order the groups do, so each group reads
@@ -151,7 +159,32 @@ export function useLivePagesSource() {
     return opened
   }
 
-  return { project, documentPath, binding, bind, baseAddress, listRoutes, openAll }
+  /**
+   * Point the pages on the canvas at the address the application answers on now, keeping each
+   * page's own path. A dev server that moved to another loopback - `127.0.0.1` when it bound
+   * `::1` - leaves every frame showing nothing, and the frames are what the address has to reach.
+   */
+  function realign(address: string): number {
+    const base = normalizeLiveURL(address)
+    if (base === '') return 0
+    const addressOrigin = pageOrigin(base)
+    if (addressOrigin === null) return 0
+    const moved: { nodeId: string; page: LivePage }[] = []
+    const live = useLivePages()
+    for (const entry of live.pages.value) {
+      if (pageOrigin(entry.page.url) === addressOrigin) continue
+      const next = relocatedPage(entry.page.url, base)
+      if (next === null) continue
+      moved.push({ nodeId: entry.nodeId, page: { ...entry.page, url: next } })
+    }
+    if (moved.length === 0) return 0
+    store.undo.runBatch('Move pages', () => {
+      for (const entry of moved) live.setPage(entry.nodeId, entry.page)
+    })
+    return moved.length
+  }
+
+  return { project, documentPath, binding, bind, baseAddress, listRoutes, openAll, realign }
 }
 
 export type LivePagesSource = ReturnType<typeof useLivePagesSource>
@@ -187,4 +220,9 @@ function openedPages(
 /** The name a frame takes for the path it shows: the path without its slash, Home at the root. */
 function pageName(path: string): string {
   return path === '/' ? 'Home' : path.replace(/^\//, '')
+}
+
+/** One spelling of a page's address, so `/pricing` and `/pricing/` are one page. */
+function canonicalURL(url: string): string {
+  return url.replace(/\/+$/, '')
 }

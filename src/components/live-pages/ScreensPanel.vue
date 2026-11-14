@@ -11,6 +11,7 @@ import { startScreenTask } from '@/app/ai/chat/screen-task'
 import { useEditorStore } from '@/app/editor/active-store'
 import { focusNodes } from '@/app/editor/selection/focus'
 import { listGitBranches } from '@/app/integrations/git/client'
+import { reachableAddress } from '@/app/live-pages/address'
 import { pageOrigin } from '@/app/live-pages/bridge'
 import { useScreensConnection } from '@/app/live-pages/connect'
 import {
@@ -189,6 +190,19 @@ async function loadBranches(): Promise<void> {
   branches.value = listed.ok ? listed.value.map((branch) => branch.name) : []
 }
 
+/**
+ * The pages on the canvas may point at the other spelling of the application's address: a dev
+ * server binds one loopback, and `127.0.0.1` reaches it only when it bound that one. The address
+ * is probed and the frames follow whichever spelling answers; nothing is started here, so a person
+ * who closed the application keeps it closed.
+ */
+async function repairFrames(): Promise<void> {
+  const base = address.value
+  if (base === '') return
+  const reachable = await reachableAddress(base)
+  if (reachable !== '') source.realign(reachable)
+}
+
 /** Whether this mounting of the panel already tried to bring the screens up by itself. */
 const autoTried = ref(false)
 
@@ -198,9 +212,13 @@ const autoTried = ref(false)
  * once per opening of the panel, so a person who closed the screens keeps them closed.
  */
 async function autoShow(): Promise<void> {
-  if (autoTried.value || !hasProject.value || missing.value === 0) return
+  if (autoTried.value || !hasProject.value) return
   autoTried.value = true
-  await connection.ensure(address.value)
+  if (missing.value > 0) {
+    await connection.ensure(address.value)
+    return
+  }
+  await repairFrames()
 }
 
 onMounted(async () => {

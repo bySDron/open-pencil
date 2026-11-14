@@ -20,6 +20,7 @@ function project(repository: string, startCommand = 'vite', url = ''): Project {
 function source(target: Project | null, routes: RouteInfo[] = []) {
   const bound: (Project | null)[] = []
   const opened: { address: string; count: number }[] = []
+  const realigned: string[] = []
   const pages = asDouble<LivePagesSource>({
     project: computed(() => target),
     documentPath: computed(() => null),
@@ -29,12 +30,16 @@ function source(target: Project | null, routes: RouteInfo[] = []) {
       bound.push(next)
     },
     listRoutes: async (): Promise<RouteInfo[]> => routes,
+    realign: (address: string) => {
+      realigned.push(address)
+      return 0
+    },
     openAll: (list: readonly RouteInfo[], address = '') => {
       opened.push({ address, count: list.length })
       return list.length
     }
   })
-  return { pages, bound, opened }
+  return { pages, bound, opened, realigned }
 }
 
 /** The routes a project's page files declare, one page each. */
@@ -105,7 +110,7 @@ test('a cancelled dialog changes nothing at all', async () => {
   expect(connection.phase.value).toBe('idle')
 })
 
-test('a project that names its own address is not waited for', async () => {
+test('a project that names its own address falls back to it when nothing is announced', async () => {
   const ready = project('D:/ready', 'vite --port 4000', 'http://127.0.0.1:4000')
   const { pages, opened } = source(ready, routes('/'))
   let waited = 0
@@ -120,7 +125,8 @@ test('a project that names its own address is not waited for', async () => {
 
   expect(await connection.connect()).toBe(true)
 
-  expect(waited).toBe(0)
+  // The server's own announcement is asked for first: only it knows which loopback it bound.
+  expect(waited).toBe(1)
   expect(opened).toEqual([{ address: 'http://127.0.0.1:4000', count: 1 }])
 })
 

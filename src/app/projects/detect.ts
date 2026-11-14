@@ -135,5 +135,7 @@ function startCommandOf(manifest: PackageManifest): string {
 /** A command that names its port already tells us where the application will answer. */
 function startURLOf(startCommand: string): string {
   const port = PORT_FLAG.exec(startCommand)?.[1]
-  return port === undefined ? '' : `http://127.0.0.1:${port}`
+  // `localhost`, not `127.0.0.1`: a dev server binds whichever loopback the name resolves to, and
+  // on Windows that is often `::1` alone - a page asked for at the other one never answers.
+  return port === undefined ? '' : `http://localhost:${port}`
 }

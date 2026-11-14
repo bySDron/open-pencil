@@ -97,14 +97,26 @@ export function applicationFolder(project: Project): string {
     : `${project.repository}/${project.appDirectory}`
 }
 
-/** Where the application answers: the address its command names, or the one it printed. */
-export function applicationAddress(project: Project, output: readonly string[]): string {
-  if (project.startUrl !== '') return project.startUrl
+/**
+ * The address a running application printed when it said it was ready, or empty while it has said
+ * nothing. A dev server names the address it really bound, which is the only address a page can be
+ * trusted to answer on.
+ */
+export function printedAddress(output: readonly string[]): string {
   for (let index = output.length - 1; index >= 0; index -= 1) {
     const found = ADDRESS.exec(output[index].replace(TERMINAL_CODES, ''))
     if (found) return found[0]
   }
   return ''
+}
+
+/**
+ * Where the application answers: the address it printed, or the one its command named when it has
+ * not printed anything yet. What a server announces wins over what a command line guessed, since
+ * only the server knows which loopback it took.
+ */
+export function applicationAddress(project: Project, output: readonly string[]): string {
+  return printedAddress(output) || project.startUrl
 }
 
 /** Whether the run is up or on its way, which is one at a time. */
