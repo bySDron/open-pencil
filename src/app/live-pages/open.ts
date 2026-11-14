@@ -9,7 +9,7 @@ import { relocatedPage } from './address'
 import { areaOf, groupByArea } from './areas'
 import { readDocumentProject, writeDocumentProject, type DocumentProject } from './bind'
 import { pageOrigin } from './bridge'
-import { layoutGroups } from './grid'
+import { layoutGroups, SECTION_GAP } from './grid'
 import { fillRoute, pagePaths, routeURL, routesFromFiles, type RouteInfo } from './routes'
 import { normalizeLiveURL, pageLabel, pluginDataWithLivePage, type LivePage } from './schema'
 import { useLivePages } from './use'
@@ -90,6 +90,21 @@ export function useLivePagesSource() {
   }
 
   /**
+   * How far down the canvas the layers already on it reach. A list of screens opened a second time
+   * is laid out below what the canvas holds rather than on top of it, which is what a person sees
+   * after pressing "show all" twice.
+   */
+  function canvasBottom(): number {
+    const pageId = store.state.currentPageId
+    let bottom = 0
+    for (const child of store.graph.getChildren(pageId)) {
+      const at = store.graph.getAbsolutePosition(child.id)
+      bottom = Math.max(bottom, at.y + child.height)
+    }
+    return bottom === 0 ? 0 : bottom + SECTION_GAP
+  }
+
+  /**
    * One frame per route, laid out under a section for each area of the application and linked to
    * the page it shows, as one undo step. A route with a parameter is opened with the value it was
    * given; a route still missing one is left out, since the page it names does not exist yet.
@@ -106,14 +121,24 @@ export function useLivePagesSource() {
     // A page the canvas already holds is not opened a second time: the panel asks for what is
     // missing, and a second press of "show all" must not lay a second copy beside the first.
     const known = new Set(useLivePages().pages.value.map((entry) => canonicalURL(entry.page.url)))
-    const pages = openedPages(routes, address, params).filter(
-      (page) => !known.has(canonicalURL(page.url))
-    )
+    const seen = new Set<string>()
+    const pages = openedPages(routes, address, params).filter((page) => {
+      const key = canonicalURL(page.url)
+      // Two routes can serve one page - a route and its index, or two files naming the same path -
+      // and a page that is already on the canvas or earlier in this same list is not opened again.
+      if (known.has(key) || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
     if (pages.length === 0) return 0
     const groups = groupByArea(pages, (page) => areaOf(page.path))
     // Sections and the pages inside them come out in the order the groups do, so each group reads
     // its own layout by the place it holds.
-    const layouts = layoutGroups(groups, { width: PAGE_WIDTH, height: PAGE_HEIGHT })
+    const layouts = layoutGroups(
+      groups,
+      { width: PAGE_WIDTH, height: PAGE_HEIGHT },
+      { x: 0, y: canvasBottom() }
+    )
     const pageId = store.state.currentPageId
     let opened = 0
     store.undo.runBatch('Open pages', () => {
@@ -147,6 +172,9 @@ export function useLivePagesSource() {
               pluginData: pluginDataWithLivePage(node, {
                 url: placed.item.url,
                 label: pageLabel(placed.item.path),
+                // Every screen is the real application. What keeps a canvas of twenty of them cheap
+                // is the layer that draws them: a page runs while it is near the view, and a person
+                // looking at the canvas sees a picture of one that is not.
                 mode: 'live'
               })
             },

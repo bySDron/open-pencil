@@ -27,17 +27,19 @@ export type GroupLayout<T> = {
  */
 export function layoutGroups<T>(
   groups: readonly { items: readonly T[] }[],
-  page: { width: number; height: number }
+  page: { width: number; height: number },
+  /** Where the content starts, which is below whatever the canvas already holds. */
+  origin: Vector = { x: 0, y: 0 }
 ): GroupLayout<T>[] {
   const layouts: GroupLayout<T>[] = []
-  let top = 0
+  let top = origin.y
   for (const group of groups) {
     if (group.items.length === 0) continue
     const columns = Math.min(group.items.length, PAGE_COLUMNS)
     const rows = Math.ceil(group.items.length / PAGE_COLUMNS)
     const width = columns * (page.width + PAGE_GAP) - PAGE_GAP + SECTION_PADDING * 2
     const height = rows * (page.height + PAGE_GAP) - PAGE_GAP + SECTION_PADDING * 2
-    const section: SectionBox = { x: 0, y: top, width, height }
+    const section: SectionBox = { x: origin.x, y: top, width, height }
     const pages = group.items.map((item, index) => ({
       item,
       at: {

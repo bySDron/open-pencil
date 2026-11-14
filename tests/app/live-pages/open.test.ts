@@ -104,3 +104,39 @@ test('a page sits inside the section of its area, placed from its corner', () =>
     (blog?.y ?? 0) + SECTION_PADDING
   )
 })
+
+test('a screen opens as the live application it is', () => {
+  const store = openDocument()
+  const source = useLivePagesSource()
+
+  expect(source.openAll([HOME], 'http://localhost:3000')).toBe(1)
+
+  // What keeps a canvas of twenty screens cheap is the layer that draws them: a page runs while it
+  // is near the view, and the one a person scrolled away from is its picture.
+  expect(pageOfFirstFrame(store)?.mode).toBe('live')
+})
+
+test('a second list of screens starts below the first, not on top of it', () => {
+  const store = openDocument()
+  const source = useLivePagesSource()
+
+  source.openAll([HOME], 'http://localhost:3000')
+  source.openAll([BLOG_POST], 'http://localhost:3000', { slug: 'hello' })
+
+  const sections = store.graph.getChildren(store.state.currentPageId)
+  const [first, second] = sections
+  // Two sections laid at the same corner hide one another, which is what "show all" pressed twice
+  // looked like.
+  expect(sections).toHaveLength(2)
+  expect(second?.y ?? 0).toBeGreaterThanOrEqual((first?.y ?? 0) + (first?.height ?? 0))
+})
+
+test('a page already on the canvas is not opened a second time', () => {
+  const store = openDocument()
+  const source = useLivePagesSource()
+
+  source.openAll([HOME], 'http://localhost:3000')
+  expect(source.openAll([HOME], 'http://localhost:3000')).toBe(0)
+
+  expect(framesOnPage(store)).toHaveLength(1)
+})
