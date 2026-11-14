@@ -94,5 +94,8 @@
   "copyChangesBrought": "Portato nel branch di lavoro:",
   "copyChangesBringFailed": "Non ? stato possibile portare le modifiche.",
   "copyChangesNothingToBring": "La copia non ha modifiche.",
-  "screenThumbnails": "Miniature"
+  "screenThumbnails": "Miniature",
+  "sourceShow": "Mostra il sorgente",
+  "sourceHide": "Nascondi il sorgente",
+  "sourceFailed": "Non ? stato possibile leggere il file."
 }

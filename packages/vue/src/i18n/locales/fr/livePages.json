@@ -94,5 +94,8 @@
   "copyChangesBrought": "Pris dans la branche de travail :",
   "copyChangesBringFailed": "Les modifications n?ont pas pu ?tre prises.",
   "copyChangesNothingToBring": "La copie n?a aucune modification.",
-  "screenThumbnails": "Miniatures"
+  "screenThumbnails": "Miniatures",
+  "sourceShow": "Voir la source",
+  "sourceHide": "Masquer la source",
+  "sourceFailed": "Le fichier n?a pas pu ?tre lu."
 }

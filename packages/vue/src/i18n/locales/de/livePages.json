@@ -94,5 +94,8 @@
   "copyChangesBrought": "In den Arbeitsbranch ?bernommen:",
   "copyChangesBringFailed": "Die ?nderungen konnten nicht ?bernommen werden.",
   "copyChangesNothingToBring": "Die Kopie hat keine ?nderungen.",
-  "screenThumbnails": "Vorschaubilder"
+  "screenThumbnails": "Vorschaubilder",
+  "sourceShow": "Quelltext zeigen",
+  "sourceHide": "Quelltext ausblenden",
+  "sourceFailed": "Die Datei konnte nicht gelesen werden."
 }

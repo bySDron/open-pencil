@@ -94,5 +94,8 @@
   "copyChangesBrought": "Levado para o branch de trabalho:",
   "copyChangesBringFailed": "N?o foi poss?vel levar as mudan?as.",
   "copyChangesNothingToBring": "A c?pia n?o tem mudan?as.",
-  "screenThumbnails": "Miniaturas"
+  "screenThumbnails": "Miniaturas",
+  "sourceShow": "Ver o c?digo-fonte",
+  "sourceHide": "Ocultar o c?digo-fonte",
+  "sourceFailed": "N?o foi poss?vel ler o arquivo."
 }

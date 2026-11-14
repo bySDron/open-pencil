@@ -94,5 +94,8 @@
   "copyChangesBrought": "Wzi?to do ga??zi roboczej:",
   "copyChangesBringFailed": "Nie uda?o si? wzi?? zmian.",
   "copyChangesNothingToBring": "Kopia nie ma zmian.",
-  "screenThumbnails": "Miniatury"
+  "screenThumbnails": "Miniatury",
+  "sourceShow": "Poka? ?r?d?o",
+  "sourceHide": "Ukryj ?r?d?o",
+  "sourceFailed": "Nie uda?o si? odczyta? pliku."
 }

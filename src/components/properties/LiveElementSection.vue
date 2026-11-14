@@ -8,6 +8,7 @@ import { startScreenTask } from '@/app/ai/chat/screen-task'
 import { useEditorStore } from '@/app/editor/active-store'
 import { listGitBranches } from '@/app/integrations/git/client'
 import { applyElementToCode, elementInstruction, screenOutline } from '@/app/live-pages/apply'
+import { componentSource, type ComponentSource } from '@/app/live-pages/component-source'
 import { createScreenCopy } from '@/app/live-pages/copies'
 import type { LiveStyleKey } from '@/app/live-pages/inspect'
 import { LIVE_STYLE_KEYS, selectorOf } from '@/app/live-pages/inspect'
@@ -118,6 +119,45 @@ const changed = computed(() =>
     .join('; ')
 )
 
+/** The component file of the picked element, which is the source a person may want to see. */
+const componentFile = computed(() => picked.value?.node.component?.file ?? null)
+
+/** The file as it was read, and whether the panel is showing it. */
+const fileSource = ref<ComponentSource | null>(null)
+const showingSource = ref(false)
+const loadingSource = ref(false)
+const sourceFailed = ref(false)
+
+/**
+ * The source of the component the element was rendered by, read from the file the page named. A
+ * second press hides it rather than reading the file again, and a new element starts from nothing.
+ */
+async function toggleSource(): Promise<void> {
+  if (showingSource.value) {
+    showingSource.value = false
+    return
+  }
+  const path = componentFile.value
+  if (path === null) return
+  showingSource.value = true
+  if (fileSource.value?.path === path) return
+  loadingSource.value = true
+  sourceFailed.value = false
+  try {
+    fileSource.value = await componentSource(path)
+    sourceFailed.value = fileSource.value === null
+  } finally {
+    loadingSource.value = false
+  }
+}
+
+// Another element is another file, so what was read for the last one is not shown for this one.
+watch(componentFile, () => {
+  fileSource.value = null
+  showingSource.value = false
+  sourceFailed.value = false
+})
+
 const selector = computed(() => (picked.value === null ? '' : selectorOf(picked.value.node)))
 
 /**
@@ -214,6 +254,32 @@ async function applyToCode(): Promise<void> {
       >
         {{ picked.node.component.name }}
       </span>
+      <!-- The file the element was rendered by, which a designer may want to read for himself. -->
+      <IconButton
+        v-if="componentFile"
+        class="shrink-0"
+        :label="showingSource ? messages.sourceHide : messages.sourceShow"
+        data-test-id="live-element-source"
+        @click="toggleSource"
+      >
+        <icon-lucide-code class="size-3.5" />
+      </IconButton>
+    </div>
+
+    <div v-if="showingSource" class="mt-1.5" data-test-id="live-element-source-text">
+      <p v-if="loadingSource" class="text-3xs text-muted">{{ messages.sourceShow }}…</p>
+      <p v-else-if="sourceFailed" class="text-3xs text-error" role="alert">
+        {{ messages.sourceFailed }}
+      </p>
+      <template v-else-if="fileSource">
+        <div class="flex items-center gap-1 text-3xs text-muted">
+          <span class="min-w-0 flex-1 truncate">{{ fileSource.path }}</span>
+          <span class="shrink-0">{{ fileSource.lines }}</span>
+        </div>
+        <pre
+          class="mt-1 max-h-56 overflow-auto rounded bg-canvas p-1.5 text-3xs leading-snug whitespace-pre"
+          >{{ fileSource.text }}</pre>
+      </template>
     </div>
 
     <div class="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5">
