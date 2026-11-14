@@ -89,6 +89,7 @@ export const livePageMessageDefaults = {
   elementBackground: 'Background',
   screenLayers: 'Screen layers',
   screenLayersWaiting: 'Reading the elements of this screen…',
+  screenThumbnails: 'Thumbnails',
   screenWidth: 'Screen width',
   widthDesktop: 'Desktop',
   widthTablet: 'Tablet',

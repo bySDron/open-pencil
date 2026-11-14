@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLocalStorage } from '@vueuse/core'
 import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
 
 import { colorToHex } from '@open-pencil/scene-graph/color'
@@ -58,13 +59,17 @@ const connection = useScreensConnection(source)
 const { pages } = useLivePages()
 const thumbs = useScreenThumbnails()
 
+/** Whether the list shows a picture of each screen, which costs a browser per screen. */
+const showThumbnails = useLocalStorage('open-pencil:screens-thumbnails', true)
+
 /** The picture of a screen, once the machine's browser has drawn it. */
 function thumbOf(screen: Screen): ScreenThumbnail | null {
-  return thumbs.thumbnailOf(screen.url)
+  return showThumbnails.value ? thumbs.thumbnailOf(screen.url) : null
 }
 
 /** Draw the pictures of the screens the list shows, which it reads by eye when they arrive. */
 watchEffect(() => {
+  if (!showThumbnails.value) return
   for (const screen of screens.value.slice(0, 20)) thumbs.request(screen.url)
 })
 const { stateOf } = usePageDrift()
@@ -539,16 +544,34 @@ function dotStyle(screen: Screen) {
         >
           {{ connectFailure }}
         </p>
-        <AppInput
-          v-model="query"
-          type="search"
-          :placeholder="messages.screenSearch"
-          :aria-label="messages.screenSearch"
-          tone="panel"
-          size="xs"
-          class="mt-2"
-          data-test-id="screens-search"
-        />
+        <div class="mt-2 flex items-center gap-1">
+          <AppInput
+            v-model="query"
+            type="search"
+            :placeholder="messages.screenSearch"
+            :aria-label="messages.screenSearch"
+            tone="panel"
+            size="xs"
+            class="min-w-0 flex-1"
+            data-test-id="screens-search"
+          />
+          <!-- Pictures cost a browser each, so they can be turned off where they are not wanted. -->
+          <button
+            type="button"
+            class="shrink-0 rounded border px-1.5 py-1"
+            :class="
+              showThumbnails
+                ? 'border-accent/40 bg-accent/15 text-accent'
+                : 'border-border text-muted hover:text-surface'
+            "
+            :aria-label="messages.screenThumbnails"
+            :aria-pressed="showThumbnails"
+            data-test-id="screens-thumbnails"
+            @click="showThumbnails = !showThumbnails"
+          >
+            <icon-lucide-image class="size-3" />
+          </button>
+        </div>
 
         <div class="mt-2 flex flex-wrap gap-1">
           <button
@@ -594,6 +617,7 @@ function dotStyle(screen: Screen) {
         >
           <!-- The page, so a list of twelve screens is read by eye rather than by address. -->
           <span
+            v-if="showThumbnails"
             class="h-6 w-10 shrink-0 overflow-hidden rounded border border-border bg-canvas"
             data-test-id="screen-thumbnail"
           >

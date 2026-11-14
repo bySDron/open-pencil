@@ -93,5 +93,6 @@
   "copyChangesBring": "In den Branch ?bernehmen",
   "copyChangesBrought": "In den Arbeitsbranch ?bernommen:",
   "copyChangesBringFailed": "Die ?nderungen konnten nicht ?bernommen werden.",
-  "copyChangesNothingToBring": "Die Kopie hat keine ?nderungen."
+  "copyChangesNothingToBring": "Die Kopie hat keine ?nderungen.",
+  "screenThumbnails": "Vorschaubilder"
 }

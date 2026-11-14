@@ -93,5 +93,6 @@
   "copyChangesBring": "Traer a la rama",
   "copyChangesBrought": "Tra?do a la rama de trabajo:",
   "copyChangesBringFailed": "No se pudieron traer los cambios.",
-  "copyChangesNothingToBring": "La copia no tiene cambios."
+  "copyChangesNothingToBring": "La copia no tiene cambios.",
+  "screenThumbnails": "Miniaturas"
 }

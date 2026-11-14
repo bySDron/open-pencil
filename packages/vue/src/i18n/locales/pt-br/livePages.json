@@ -93,5 +93,6 @@
   "copyChangesBring": "Levar para o branch",
   "copyChangesBrought": "Levado para o branch de trabalho:",
   "copyChangesBringFailed": "N?o foi poss?vel levar as mudan?as.",
-  "copyChangesNothingToBring": "A c?pia n?o tem mudan?as."
+  "copyChangesNothingToBring": "A c?pia n?o tem mudan?as.",
+  "screenThumbnails": "Miniaturas"
 }

@@ -93,5 +93,6 @@
   "copyChangesBring": "Prendre dans la branche",
   "copyChangesBrought": "Pris dans la branche de travail :",
   "copyChangesBringFailed": "Les modifications n?ont pas pu ?tre prises.",
-  "copyChangesNothingToBring": "La copie n?a aucune modification."
+  "copyChangesNothingToBring": "La copie n?a aucune modification.",
+  "screenThumbnails": "Miniatures"
 }
