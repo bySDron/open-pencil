@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import { useEditorStore } from '@/app/editor/active-store'
 import { selectorOf } from '@/app/live-pages/inspect'
 import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/inspect/bridge'
 import { pickedElement } from '@/app/live-pages/pick'
 import type { PagePlacement } from '@/app/live-pages/placement'
 import type { LivePage } from '@/app/live-pages/schema'
+import { onFrameTick } from '@/app/live-pages/ticker'
 import { useLivePages } from '@/app/live-pages/use'
 
 /**
@@ -49,8 +51,10 @@ const {
 }>()
 
 const { setMode } = useLivePages()
+const store = useEditorStore()
 
 const frame = ref<HTMLIFrameElement | null>(null)
+const wrapper = ref<HTMLElement | null>(null)
 
 /** Whether this screen runs its own application here. */
 const runs = computed(() => page.mode === 'live' && running)
@@ -62,12 +66,41 @@ function register(): void {
 
 onMounted(() => {
   if (runs.value) register()
+  stopPlacing = onFrameTick(place)
 })
 
 onBeforeUnmount(() => {
+  stopPlacing()
   registerPageFrame(nodeId, null)
   clearPageTree(nodeId)
 })
+
+/** Where this page was last drawn, so a frame that has not moved writes nothing. */
+let placed = ''
+let stopPlacing: () => void = () => undefined
+
+/**
+ * Put this page where the canvas draws its layer.
+ *
+ * A page sits over the canvas rather than in it, so nothing places it for us. Reading the place
+ * from the layer's own versions is not enough: a layer being dragged is drawn from a preview that
+ * is not an edit and never reaches them, which leaves the page at the place the drag began until
+ * the mouse is let go. The graph is read directly, once a frame, and the box is moved by transform,
+ * which the compositor applies without laying the page out again.
+ */
+function place(): void {
+  const box = wrapper.value
+  if (box === null) return
+  const node = store.graph.getNode(nodeId)
+  if (!node) return
+  const at = store.graph.getAbsolutePosition(nodeId)
+  const key = `${at.x}|${at.y}|${node.width}|${node.height}`
+  if (key === placed) return
+  box.style.transform = `translate3d(${at.x}px, ${at.y}px, 0)`
+  box.style.width = `${node.width}px`
+  box.style.height = `${node.height}px`
+  placed = key
+}
 
 /** A reloaded page is a new document: the inspector in it starts from a ping. */
 function announce(): void {
@@ -119,6 +152,7 @@ watch(
 
 <template>
   <div
+    ref="wrapper"
     class="absolute top-0 inset-s-0 overflow-hidden"
     :class="interactive || picking ? 'pointer-events-auto' : 'pointer-events-none'"
     :style="{
