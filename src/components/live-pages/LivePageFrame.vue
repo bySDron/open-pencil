@@ -29,7 +29,6 @@ const {
   interactive,
   picking = false,
   running = true,
-  awake = true,
   watched = true,
   nodeId
 } = defineProps<{
@@ -43,8 +42,6 @@ const {
   picking?: boolean
   /** Whether the page runs at all, or the canvas draws the picture of it. */
   running?: boolean
-  /** Whether the page is drawn as itself, or covered by its picture while the view moves. */
-  awake?: boolean
   /** Whether this screen is in the view, which is when its picture is worth taking. */
   watched?: boolean
   /** The frame this page draws on, which the layer reads back to name the frame that posted. */
@@ -56,13 +53,10 @@ const { setMode } = useLivePages()
 
 const frame = ref<HTMLIFrameElement | null>(null)
 
-/** Whether this screen runs its own application here. */
+/** Whether this screen runs its own application here, which is the one screen a person works on. */
 const runs = computed(() => page.mode === 'live' && running)
 
-/** Whether the page itself is what a person sees, rather than the picture of it. */
-const showsPage = computed(() => runs.value && awake)
-
-/** The picture of a screen that is not drawn as itself, taken by the machine's own browser. */
+/** The picture of a screen that is not running, taken by the machine's own browser. */
 const picture = computed(() => thumbnails.thumbnailOf(page.url)?.src ?? null)
 
 /** Announce the window this frame draws, so requests have somewhere to go. */
@@ -114,17 +108,11 @@ watch(runs, async (on) => {
     announce()
     return
   }
-  // A screen too far to run keeps no window and no layer list: its picture stands for it.
+  // A screen that does not run keeps no window and no layer list: its picture stands for it.
   registerPageFrame(nodeId, null)
   clearPageTree(nodeId)
+  askForPicture()
 })
-
-watch(
-  () => awake,
-  (on) => {
-    if (!on) askForPicture()
-  }
-)
 
 watch(
   () => picking,
@@ -176,7 +164,6 @@ watch(
       :aria-label="page.label ?? page.url"
       :data-node-id="nodeId"
       class="size-full border-0 bg-white"
-      :class="showsPage ? '' : 'invisible'"
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       referrerpolicy="no-referrer"
       loading="lazy"
@@ -184,17 +171,13 @@ watch(
       @load="announce"
     />
     <img
-      v-if="!showsPage && picture !== null"
+      v-else-if="picture !== null"
       :src="picture"
       :alt="page.label ?? page.url"
       class="absolute inset-0 size-full select-none object-cover object-top"
       draggable="false"
       data-test-id="live-page-picture"
     />
-    <div
-      v-else-if="!showsPage"
-      class="size-full bg-white"
-      data-test-id="live-page-picture-empty"
-    />
+    <div v-else class="size-full bg-white" data-test-id="live-page-picture-empty" />
   </div>
 </template>

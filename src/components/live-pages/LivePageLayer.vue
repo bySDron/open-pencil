@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventListener, useElementSize } from '@vueuse/core'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 
 import { resolveEditorProfile, type EditorProfileInputs, type EditorState } from '@open-pencil/core'
 import type { ViewportTransform } from '@open-pencil/core/geometry'
@@ -172,33 +172,6 @@ const focusedId = computed(() => {
   const [first] = store.state.selectedIds
   return first ?? null
 })
-
-/** How long after the last pan or zoom the view still counts as moving. */
-const MOVING_SETTLE_MS = 150
-
-/**
- * Whether the view is moving. A page that is drawn while the canvas pans or zooms is a page the
- * compositor has to draw again at every step, which is what makes a zoom stutter: while the view
- * moves, every screen shows the picture of itself and the pages are left alone.
- */
-const moving = ref(false)
-let settle: ReturnType<typeof setTimeout> | null = null
-
-watch(
-  () => [placement.value.panX, placement.value.panY, placement.value.zoom] as const,
-  () => {
-    moving.value = true
-    if (settle !== null) clearTimeout(settle)
-    settle = setTimeout(() => {
-      moving.value = false
-      settle = null
-    }, MOVING_SETTLE_MS)
-  }
-)
-
-onBeforeUnmount(() => {
-  if (settle !== null) clearTimeout(settle)
-})
 </script>
 
 <template>
@@ -219,7 +192,6 @@ onBeforeUnmount(() => {
         :interactive="interactive"
         :picking="isPicking"
         :running="entry.nodeId === focusedId"
-        :awake="entry.nodeId === focusedId && !moving"
         :watched="visibility.shown.has(entry.nodeId)"
       />
     </div>

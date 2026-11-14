@@ -1,4 +1,4 @@
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 import type { SceneNode } from '@open-pencil/scene-graph'
 import type { Vector } from '@open-pencil/scene-graph/primitives'
@@ -30,6 +30,27 @@ export type LivePageEntry = {
 const reloads = reactive<Record<string, number>>({})
 
 /**
+ * The graph is not reactive, and a layer being moved is moved through a preview only the canvas
+ * reads: its position changes without the scene version moving at all. A page lives on such a
+ * layer, so it has to follow the preview - otherwise the page stays where the layer was when the
+ * drag began, and jumps to the new place only when the mouse is let go.
+ */
+const previewVersion = ref(0)
+let sampling = 0
+
+/** Read the graph's preview version once a frame, so a page follows a layer being moved. */
+function followPreviews(graph: { positionPreviewVersion: number }): void {
+  if (sampling !== 0 || typeof requestAnimationFrame !== 'function') return
+  const step = (): void => {
+    if (graph.positionPreviewVersion !== previewVersion.value) {
+      previewVersion.value = graph.positionPreviewVersion
+    }
+    sampling = requestAnimationFrame(step)
+  }
+  sampling = requestAnimationFrame(step)
+}
+
+/**
  * The pages of the running application shown on the canvas: which frames show one, where they sit,
  * and how to link, unlink, and reload them. A page lives on its frame's plugin data, so it travels
  * with the document and an undo brings it back like any other edit.
@@ -39,10 +60,14 @@ const reloads = reactive<Record<string, number>>({})
  */
 export function useLivePages(options: { pageId?: () => string } = {}) {
   const store = useEditorStore()
+  followPreviews(store.graph)
 
   const pages = computed<LivePageEntry[]>(() => {
     // A frame can be moved, resized, or relinked without the page itself changing.
     void store.state.sceneVersion
+    // A frame being dragged is only previewed: the canvas draws it in its new place before the edit
+    // is committed, and the page has to be in that place too.
+    void previewVersion.value
     const pageId = options.pageId?.() ?? store.state.currentPageId
     const at = (nodeId: string) => store.graph.getAbsolutePosition(nodeId)
     /**
