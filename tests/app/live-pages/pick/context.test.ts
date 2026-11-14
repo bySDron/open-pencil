@@ -1,8 +1,8 @@
 import { beforeEach, expect, test } from 'bun:test'
 
-import type { PageNode } from '@/app/live-pages/inspect-protocol'
+import type { PageNode } from '@/app/live-pages/inspect/protocol'
 import { clearPick, pickFromPage, setPickedStyle } from '@/app/live-pages/pick'
-import { changedValues, pickedScreenElement } from '@/app/live-pages/pick-context'
+import { changedValues, pickedScreenElement } from '@/app/live-pages/pick/context'
 
 const node: PageNode = {
   id: '2',

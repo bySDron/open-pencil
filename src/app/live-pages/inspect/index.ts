@@ -1,6 +1,6 @@
 import type { Rect } from '@open-pencil/scene-graph/primitives'
 
-import type { PageNode } from './inspect-protocol'
+import type { PageNode } from './protocol'
 
 /**
  * Reading and changing one element of a page the application runs.

@@ -14,7 +14,7 @@ import {
 } from '@/app/live-pages/apply'
 import type { ScreenCopy } from '@/app/live-pages/copies'
 import { pluginDataWithScreenCopy } from '@/app/live-pages/copies'
-import type { PageNode } from '@/app/live-pages/inspect-protocol'
+import type { PageNode } from '@/app/live-pages/inspect/protocol'
 
 const copy: ScreenCopy = {
   branch: 'op/sales-pricing-2026-11-14',

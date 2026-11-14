@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
-import type { InspectRequest, PageNode } from './inspect-protocol'
-import { inspectRequest } from './inspect-protocol'
+import type { InspectRequest, PageNode } from './protocol'
+import { inspectRequest } from './protocol'
 
 /**
  * The app's side of the inspector: the frames that run it, the trees they answer with, and the

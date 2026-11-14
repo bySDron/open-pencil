@@ -2,7 +2,7 @@ import * as v from 'valibot'
 
 import type { Rect } from '@open-pencil/scene-graph/primitives'
 
-import type { LiveStyleKey } from './inspect'
+import type { LiveStyleKey } from './index'
 
 /**
  * What the runtime injected into every live page says, and what it is asked.

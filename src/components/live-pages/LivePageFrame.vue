@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { selectorOf } from '@/app/live-pages/inspect'
-import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/inspect-bridge'
+import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/inspect/bridge'
 import { pickedElement } from '@/app/live-pages/pick'
 import type { PagePlacement } from '@/app/live-pages/placement'
 import type { LivePage } from '@/app/live-pages/schema'

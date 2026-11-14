@@ -5,7 +5,7 @@ import {
   inspectRequest,
   readInspectMessage,
   type PageNode
-} from '@/app/live-pages/inspect-protocol'
+} from '@/app/live-pages/inspect/protocol'
 
 const node: PageNode = {
   id: '3',

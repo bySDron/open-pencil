@@ -5,7 +5,7 @@ import type { Rect } from '@open-pencil/scene-graph/primitives'
 import { asDouble } from '@open-pencil/test-support/doubles'
 import { repoPath } from '@open-pencil/test-support/paths'
 
-import { readInspectMessage } from '@/app/live-pages/inspect-protocol'
+import { readInspectMessage } from '@/app/live-pages/inspect/protocol'
 
 /**
  * The inspector is a script a page runs, so it is tested as one: the file is loaded into a fake

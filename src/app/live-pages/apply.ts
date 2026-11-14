@@ -9,7 +9,7 @@ import {
   type ScreenCopy
 } from './copies'
 import { selectorOf } from './inspect'
-import type { PageNode } from './inspect-protocol'
+import type { PageNode } from './inspect/protocol'
 import { readLivePage } from './schema'
 import type { Screen } from './screens'
 

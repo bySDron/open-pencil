@@ -1,8 +1,8 @@
 import { ref, shallowRef } from 'vue'
 
-import type { LiveRect, LiveStyleKey } from './inspect'
-import { sendToPage } from './inspect-bridge'
-import type { PageNode, PagePick } from './inspect-protocol'
+import type { LiveRect, LiveStyleKey } from '../inspect'
+import { sendToPage } from '../inspect/bridge'
+import type { PageNode, PagePick } from '../inspect/protocol'
 
 /**
  * The element of a live page a person picked, and the values they changed on it.

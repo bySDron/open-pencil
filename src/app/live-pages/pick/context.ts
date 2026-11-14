@@ -1,5 +1,5 @@
-import { selectorOf } from './inspect'
-import { pickedElement, writtenStyles } from './pick'
+import { selectorOf } from '../inspect'
+import { pickedElement, writtenStyles } from './index'
 
 /**
  * The element a person is looking at on a running page, in the words a chat request carries.

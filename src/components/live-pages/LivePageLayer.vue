@@ -7,8 +7,8 @@ import type { ViewportTransform } from '@open-pencil/core/geometry'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
-import { requestPageTree, setPageTree } from '@/app/live-pages/inspect-bridge'
-import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect-protocol'
+import { requestPageTree, setPageTree } from '@/app/live-pages/inspect/bridge'
+import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect/protocol'
 import {
   isPicking,
   pickFromPage,

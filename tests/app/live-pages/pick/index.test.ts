@@ -2,8 +2,8 @@ import { beforeEach, expect, test } from 'bun:test'
 
 import { asDouble } from '@open-pencil/test-support/doubles'
 
-import { registerPageFrame } from '@/app/live-pages/inspect-bridge'
-import type { PageNode } from '@/app/live-pages/inspect-protocol'
+import { registerPageFrame } from '@/app/live-pages/inspect/bridge'
+import type { PageNode } from '@/app/live-pages/inspect/protocol'
 import {
   clearPick,
   isPicking,

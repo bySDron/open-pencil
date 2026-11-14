@@ -5,8 +5,8 @@ import { useLivePageMessages } from '@open-pencil/vue/i18n'
 import { vTestId } from '@open-pencil/vue/testing'
 
 import { selectorOf } from '@/app/live-pages/inspect'
-import { requestPageTree, pageTrees, sendToPage } from '@/app/live-pages/inspect-bridge'
-import type { PageNode } from '@/app/live-pages/inspect-protocol'
+import { requestPageTree, pageTrees, sendToPage } from '@/app/live-pages/inspect/bridge'
+import type { PageNode } from '@/app/live-pages/inspect/protocol'
 import { pickedElement } from '@/app/live-pages/pick'
 import IconButton from '@/components/ui/button/IconButton.vue'
 
