@@ -9,7 +9,13 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
 import { requestPageTree, setPageTree } from '@/app/live-pages/inspect-bridge'
 import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect-protocol'
-import { isPicking, pickFromPage, startPicking, stopPicking, stylesFromPage } from '@/app/live-pages/pick'
+import {
+  isPicking,
+  pickFromPage,
+  startPicking,
+  stopPicking,
+  stylesFromPage
+} from '@/app/live-pages/pick'
 import { layerTransform } from '@/app/live-pages/placement'
 import { useLivePageSelection } from '@/app/live-pages/selection'
 import { useLivePages } from '@/app/live-pages/use'
