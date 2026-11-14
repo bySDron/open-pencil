@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
 
 import { colorToHex } from '@open-pencil/scene-graph/color'
 import { shownStatusState } from '@open-pencil/scene-graph/statuses'
@@ -35,6 +35,7 @@ import {
   type ScreenFilter,
   type ScreenStatus
 } from '@/app/live-pages/screens'
+import { useScreenThumbnails, type ScreenThumbnail } from '@/app/live-pages/thumbnails'
 import { useLivePages } from '@/app/live-pages/use'
 import { SCREEN_WIDTHS, resizeScreen, widthKind, type ScreenWidth } from '@/app/live-pages/widths'
 import CopyChangesSection from '@/components/live-pages/CopyChangesSection.vue'
@@ -55,6 +56,17 @@ const messages = useLivePageMessages()
 const source = useLivePagesSource()
 const connection = useScreensConnection(source)
 const { pages } = useLivePages()
+const thumbs = useScreenThumbnails()
+
+/** The picture of a screen, once the machine's browser has drawn it. */
+function thumbOf(screen: Screen): ScreenThumbnail | null {
+  return thumbs.thumbnailOf(screen.url)
+}
+
+/** Draw the pictures of the screens the list shows, which it reads by eye when they arrive. */
+watchEffect(() => {
+  for (const screen of screens.value.slice(0, 20)) thumbs.request(screen.url)
+})
 const { stateOf } = usePageDrift()
 
 const routes = ref<RouteInfo[]>([])
@@ -580,6 +592,22 @@ function dotStyle(screen: Screen) {
           @click="show(screen)"
           @keydown.enter.prevent="show(screen)"
         >
+          <!-- The page, so a list of twelve screens is read by eye rather than by address. -->
+          <span
+            class="h-6 w-10 shrink-0 overflow-hidden rounded border border-border bg-canvas"
+            data-test-id="screen-thumbnail"
+          >
+            <img
+              v-if="thumbOf(screen)"
+              :src="thumbOf(screen)!.src"
+              alt=""
+              class="size-full object-cover object-top"
+            />
+            <span
+              v-else-if="thumbs.pendingOf(screen.url)"
+              class="block size-full animate-pulse bg-hover"
+            />
+          </span>
           <span
             class="size-1.5 shrink-0 rounded-full"
             :class="dotClass(screen)"
