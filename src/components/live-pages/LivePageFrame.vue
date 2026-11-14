@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Vector } from '@open-pencil/scene-graph/primitives'
@@ -94,6 +95,14 @@ type PagePoint = Vector
 let pressed: PagePoint | null = null
 let hoveredAt = 0
 
+/**
+ * Whether a gesture that began on the shield is still running.
+ *
+ * While it is, the page takes no pointer at all: the canvas owns the gesture and has to see the
+ * moves, which it only does when nothing of the page stands in their way.
+ */
+const dragging = ref(false)
+
 /** A point of the page, from a point of the window: the page is drawn scaled with the canvas. */
 function pagePoint(event: MouseEvent): PagePoint | null {
   const box = wrapper.value
@@ -114,17 +123,39 @@ function pagePoint(event: MouseEvent): PagePoint | null {
  */
 function onShieldDown(event: MouseEvent): void {
   pressed = { x: event.clientX, y: event.clientY }
-  // The canvas starts a drag from a mousedown on itself and follows it on the window, where the
-  // moves this shield sees still pass.
-  canvas?.dispatchEvent(
-    new MouseEvent('mousedown', {
-      clientX: event.clientX,
-      clientY: event.clientY,
-      bubbles: true,
-      button: 0,
-      buttons: 1
-    })
-  )
+  // The canvas owns the gesture from here: the page steps out of the way for its whole length, so
+  // the moves reach the canvas and the frame follows the pointer rather than jumping at the end.
+  dragging.value = true
+  const press = {
+    clientX: event.clientX,
+    clientY: event.clientY,
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+    buttons: 1,
+    isPrimary: true,
+    pointerId: 1,
+    pointerType: 'mouse'
+  }
+  canvas?.dispatchEvent(new PointerEvent('pointerdown', press))
+  canvas?.dispatchEvent(new MouseEvent('mousedown', press))
+}
+
+/**
+ * The end of a gesture the shield began: a pointer that barely moved is a click, and a click picks
+ * the element at that place. The page took no pointer while the gesture ran, so its end is read
+ * from the window rather than from the shield.
+ */
+function endGesture(event: MouseEvent): void {
+  dragging.value = false
+  const start = pressed
+  pressed = null
+  if (start === null) return
+  const dragged =
+    Math.abs(event.clientX - start.x) + Math.abs(event.clientY - start.y) > 4
+  if (dragged) return
+  const point = pagePoint(event)
+  if (point !== null) sendToPage(nodeId, { type: 'pickAt', x: point.x, y: point.y })
 }
 
 function onShieldMove(event: MouseEvent): void {
@@ -135,16 +166,8 @@ function onShieldMove(event: MouseEvent): void {
   if (point !== null) sendToPage(nodeId, { type: 'hoverAt', x: point.x, y: point.y })
 }
 
-function onShieldUp(event: MouseEvent): void {
-  const start = pressed
-  pressed = null
-  const dragged =
-    start !== null &&
-    Math.abs(event.clientX - start.x) + Math.abs(event.clientY - start.y) > 4
-  if (dragged) return
-  const point = pagePoint(event)
-  if (point !== null) sendToPage(nodeId, { type: 'pickAt', x: point.x, y: point.y })
-}
+// The end of a gesture is read from the window: while it runs, the page takes no pointer at all.
+useEventListener(window, 'mouseup', endGesture)
 
 /**
  * Put this page where the canvas draws its layer.
@@ -221,7 +244,9 @@ watch(
   <div
     ref="wrapper"
     class="absolute top-0 inset-s-0 overflow-hidden"
-    :class="interactive || focused ? 'pointer-events-auto' : 'pointer-events-none'"
+    :class="
+      !dragging && (interactive || focused) ? 'pointer-events-auto' : 'pointer-events-none'
+    "
     :style="{
       width: `${placement.width}px`,
       height: `${placement.height}px`,
@@ -256,7 +281,6 @@ watch(
       data-test-id="live-page-shield"
       @mousedown="onShieldDown"
       @mousemove="onShieldMove"
-      @mouseup="onShieldUp"
     />
   </div>
 </template>
