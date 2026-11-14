@@ -329,11 +329,12 @@ function copyLabel(screen: Screen): string {
 }
 
 /**
- * Hand the screen's copy to the chat: the coding agent starts in the copy's folder and is asked
- * to change that screen alone, with the task waiting in the composer to be sent.
+ * Hand the screen to the chat: the coding agent starts in the screen's own copy and is asked to
+ * change that screen alone, with the task waiting in the composer to be sent. A screen that has no
+ * copy gets one here rather than in a second press, since the copy is what the task needs.
  */
-function editScreen(screen: Screen): void {
-  const copy = copyOf(screen)
+async function editScreen(screen: Screen): Promise<void> {
+  const copy = copyOf(screen) ?? (await ensureCopy(screen))
   if (copy === null) return
   startScreenTask({ folder: copy.path, prompt: screenTaskPrompt(screen, copy) })
   showChatPanel()
@@ -343,17 +344,17 @@ function editScreen(screen: Screen): void {
  * Give a screen a copy of its own: a branch beside the one a person is on, made without switching,
  * so the work on that screen lands there and comes back as a patch.
  */
-async function makeCopy(screen: Screen): Promise<void> {
+async function ensureCopy(screen: Screen): Promise<ScreenCopy | null> {
   const repo = repository.value
   if (repo === null || screen.nodeId === null) {
     failure.value = messages.value.copyNoRepository
-    return
+    return null
   }
   failure.value = ''
   const made = await createScreenCopy(repo, screen, branches.value)
   if (!made.ok) {
     failure.value = messages.value.copyFailed
-    return
+    return null
   }
   const node = store.graph.getNode(screen.nodeId)
   if (node) {
@@ -364,6 +365,12 @@ async function makeCopy(screen: Screen): Promise<void> {
     )
   }
   branches.value = [...branches.value, made.value.branch]
+  return made.value
+}
+
+/** The copy button: the same work, with its result left where the row shows it. */
+async function makeCopy(screen: Screen): Promise<void> {
+  await ensureCopy(screen)
 }
 
 /** Arrow keys walk the rows, so the list is used without the pointer, as a layer list is. */
@@ -467,7 +474,12 @@ function dotStyle(screen: Screen) {
           <template #leading>
             <icon-lucide-mouse-pointer class="size-3.5" />
           </template>
-          {{ isPicking ? messages.pickHint : messages.pickElement }}
+          <span class="flex w-full items-center gap-1">
+            <span class="min-w-0 flex-1 truncate">
+              {{ isPicking ? messages.pickHint : messages.pickElement }}
+            </span>
+            <kbd class="shrink-0 rounded border border-border px-1 text-4xs text-muted">E</kbd>
+          </span>
         </AppButton>
         <div class="mt-2">
           <p class="text-3xs text-muted">{{ messages.screenWidth }}</p>
@@ -593,8 +605,9 @@ function dotStyle(screen: Screen) {
             {{ messages.screenNotOpen }}
           </span>
 
+          <!-- A screen is edited through its copy, which the press makes when there is none yet. -->
           <button
-            v-if="copyOf(screen) !== null"
+            v-if="repository !== null && screen.nodeId !== null"
             type="button"
             class="shrink-0 rounded p-0.5 text-muted opacity-0 hover:text-surface focus-visible:opacity-100 group-hover/screen:opacity-100"
             :aria-label="messages.editScreen"

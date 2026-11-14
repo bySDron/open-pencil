@@ -9,7 +9,7 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
 import { requestPageTree, setPageTree } from '@/app/live-pages/inspect-bridge'
 import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect-protocol'
-import { isPicking, pickFromPage, stylesFromPage, stopPicking } from '@/app/live-pages/pick'
+import { isPicking, pickFromPage, startPicking, stopPicking, stylesFromPage } from '@/app/live-pages/pick'
 import { layerTransform } from '@/app/live-pages/placement'
 import { useLivePageSelection } from '@/app/live-pages/selection'
 import { useLivePages } from '@/app/live-pages/use'
@@ -47,10 +47,27 @@ const transform = computed(() => layerTransform(placement.value))
 const interactive = computed(() => resolveEditorProfile(view).live !== null)
 const root = ref<HTMLElement | null>(null)
 
-// Escape leaves the picking mode, as it leaves every mode the canvas puts a person in.
+// Escape leaves the picking mode, as it leaves every mode the canvas puts a person in; E takes the
+// next click as an element, which is the one shortcut an inspector is used by. `V` is the Select
+// tool, so the letter an inspector would rather have is not free.
 useEventListener(window, 'keydown', (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && isPicking.value) stopPicking()
+  if (event.key === 'Escape') {
+    if (isPicking.value) stopPicking()
+    return
+  }
+  if (event.key !== 'e' && event.key !== 'E') return
+  if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event)) return
+  if (isPicking.value) stopPicking()
+  else startPicking()
 })
+
+/** Whether a key was typed into a field, where `e` means the letter and nothing else. */
+function isTyping(event: KeyboardEvent): boolean {
+  const target = event.target as HTMLElement | null
+  if (target === null) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
 
 /** The origins a selection may come from: only the pages this layer shows. */
 const origins = computed(() => {
