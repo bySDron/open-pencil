@@ -20,6 +20,8 @@ export interface ACPAgentDef {
   adapterPackage?: string
   /** The vendor's installation guide for the agent itself. */
   setupURL?: string
+  /** What a session with this agent takes, as the agent reports it: images, and tools. */
+  capabilities?: readonly ('tools' | 'vision')[]
   installCommand?: string
   /** The install command for Windows, run in PowerShell, where `installCommand` needs a POSIX shell. */
   windowsInstallCommand?: string
@@ -113,7 +115,10 @@ export const ACP_AGENTS: ACPAgentDef[] = [
     // with the providers and models they already connected there, and no adapter stands between.
     command: 'dsh',
     args: ['--profile', 'acp'],
-    cliCommand: 'dsh'
+    cliCommand: 'dsh',
+    // A DSH session hands image prompts to the model its own profile selects, and the harness
+    // reports `promptCapabilities.image` on `initialize`, so its pictures go straight to it.
+    capabilities: ['tools', 'vision']
   }
 ]
 

@@ -16,6 +16,7 @@ import { setVisibleMessageText } from '@/app/ai/chat/presentation'
 import { commandsAsText } from '@/app/ai/chat/references/command'
 import { mentionedNodes } from '@/app/ai/chat/references/nodes'
 import { reportSubmissionError, type SubmissionErrorOptions } from '@/app/ai/chat/submission/errors'
+import { imageFiles } from '@/app/ai/chat/submission/files'
 import { prepareSubmittedImages } from '@/app/ai/chat/submission/images'
 import { chatToResend } from '@/app/ai/chat/submission/resend'
 import { sendText } from '@/app/ai/chat/submission/text'
@@ -108,17 +109,18 @@ export function useChatSubmission(options: SubmissionOptions) {
     )
     setMessageAttachments(messageId, [...nodeAttachments, ...normalizedImages])
     send()
-    await withTurn(currentChat, () =>
-      currentChat
-        .sendMessage({
-          messageId,
-          text: designMessageWithImageFindings(
+    // A model that reads images is given them; one that does not is given what a vision model saw.
+    const files = findings === null ? imageFiles(preparedImages, submission.images) : []
+    const text =
+      findings === null
+        ? submission.modelText
+        : designMessageWithImageFindings(
             submission.modelText,
             submission.images.map((image) => image.file.name),
             findings
           )
-        })
-        .catch(() => undefined)
+    await withTurn(currentChat, () =>
+      currentChat.sendMessage({ messageId, text, files }).catch(() => undefined)
     )
   }
 
