@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
+import { colorToHex } from '@open-pencil/scene-graph/color'
+import { shownStatusState } from '@open-pencil/scene-graph/statuses'
 import { useLivePageMessages } from '@open-pencil/vue/i18n'
+import { vTestId } from '@open-pencil/vue/testing'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { focusNodes } from '@/app/editor/selection/focus'
@@ -9,7 +12,14 @@ import { pageOrigin } from '@/app/live-pages/bridge'
 import { usePageDrift } from '@/app/live-pages/drift/use'
 import { useLivePagesSource } from '@/app/live-pages/open'
 import type { RouteInfo } from '@/app/live-pages/routes'
-import { filterScreens, groupScreens, screensOf, type Screen } from '@/app/live-pages/screens'
+import {
+  filterScreens,
+  groupScreens,
+  screensOf,
+  type Screen,
+  type ScreenFilter,
+  type ScreenStatus
+} from '@/app/live-pages/screens'
 import { useLivePages } from '@/app/live-pages/use'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import AppInput from '@/components/ui/input/AppInput.vue'
@@ -27,7 +37,19 @@ const { stateOf } = usePageDrift()
 
 const routes = ref<RouteInfo[]>([])
 const query = ref('')
+const filter = ref<ScreenFilter>('all')
 const list = ref<HTMLElement | null>(null)
+
+/**
+ * The status a frame shows, as the document's own workflow names and colours it, so the panel
+ * reads the same words the canvas writes above the frame.
+ */
+function statusOf(nodeId: string): ScreenStatus | null {
+  const node = store.graph.getNode(nodeId)
+  if (!node) return null
+  const state = shownStatusState(store.graph, node)
+  return state === null ? null : { name: state.name, color: colorToHex(state.color) }
+}
 
 /** The frames the canvas already shows, as the list matches them to the routes they answer. */
 const open = computed(() =>
@@ -50,12 +72,24 @@ const screens = computed(() =>
     routes: routes.value,
     address: address.value,
     open: open.value,
-    changed: (nodeId) => stateOf(nodeId) === 'changed'
+    changed: (nodeId) => stateOf(nodeId) === 'changed',
+    statusOf
   })
 )
 
-const groups = computed(() => groupScreens(filterScreens(screens.value, 'all', query.value)))
+const groups = computed(() => groupScreens(filterScreens(screens.value, filter.value, query.value)))
 const missing = computed(() => screens.value.filter((screen) => screen.nodeId === null).length)
+
+/** What each filter would leave, so a chip never has to be pressed to know. */
+const chips = computed(() => [
+  { id: 'all' as const, label: messages.value.filterAll, count: screens.value.length },
+  {
+    id: 'changed' as const,
+    label: messages.value.screenChanged,
+    count: screens.value.filter((screen) => screen.changed).length
+  },
+  { id: 'not-open' as const, label: messages.value.filterNotOpen, count: missing.value }
+])
 
 const selected = computed(() => {
   void store.state.sceneVersion
@@ -114,8 +148,14 @@ function rowClass(screen: Screen): string {
 }
 
 function dotClass(screen: Screen): string {
+  if (screen.status) return ''
   if (screen.changed) return 'bg-accent'
   return screen.nodeId === null ? 'bg-muted/40' : 'bg-success'
+}
+
+/** A screen with a status shows the colour its document gives that status. */
+function dotStyle(screen: Screen) {
+  return screen.status ? { background: screen.status.color } : undefined
 }
 </script>
 
@@ -144,6 +184,24 @@ function dotClass(screen: Screen): string {
         class="mt-2"
         data-test-id="screens-search"
       />
+
+      <div class="mt-2 flex flex-wrap gap-1">
+        <button
+          v-for="chip in chips"
+          :key="chip.id"
+          type="button"
+          class="rounded-full border px-2 py-0.5 text-3xs"
+          :class="
+            filter === chip.id
+              ? 'border-accent/40 bg-accent/15 text-accent'
+              : 'border-border text-muted hover:text-surface'
+          "
+          v-test-id="`screens-filter-${chip.id}`"
+          @click="filter = chip.id"
+        >
+          {{ chip.label }} {{ chip.count }}
+        </button>
+      </div>
     </div>
 
     <div ref="list" class="mt-1 min-h-0 flex-1 overflow-y-auto px-1 pb-2" @keydown="onKeydown">
@@ -159,13 +217,20 @@ function dotClass(screen: Screen): string {
           :class="rowClass(screen)"
           @click="show(screen)"
         >
-          <span class="size-1.5 shrink-0 rounded-full" :class="dotClass(screen)" />
+          <span
+            class="size-1.5 shrink-0 rounded-full"
+            :class="dotClass(screen)"
+            :style="dotStyle(screen)"
+          />
           <span class="min-w-0 flex-1 truncate">{{ screen.name }}</span>
           <span
             v-if="screen.changed"
             class="shrink-0 rounded bg-accent/15 px-1 text-3xs text-accent"
           >
             {{ messages.screenChanged }}
+          </span>
+          <span v-else-if="screen.status" class="shrink-0 text-3xs text-muted">
+            {{ screen.status.name }}
           </span>
           <span v-else-if="screen.nodeId === null" class="shrink-0 text-3xs text-muted">
             {{ messages.screenNotOpen }}

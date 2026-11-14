@@ -44,5 +44,7 @@
   "showAllScreens": "اعرض كل الشاشات",
   "screenSearch": "ابحث في الشاشات",
   "screenChanged": "تغيّرت",
-  "screenNotOpen": "ليست على اللوحة"
+  "screenNotOpen": "ليست على اللوحة",
+  "filterAll": "الكل",
+  "filterNotOpen": "للفتح"
 }

@@ -44,5 +44,7 @@
   "showAllScreens": "Mostra tutte le schermate",
   "screenSearch": "Cerca schermate",
   "screenChanged": "Modificata",
-  "screenNotOpen": "Non sulla tela"
+  "screenNotOpen": "Non sulla tela",
+  "filterAll": "Tutte",
+  "filterNotOpen": "Da aprire"
 }

@@ -51,7 +51,9 @@ export const livePageMessageDefaults = {
   showAllScreens: 'Show all screens',
   screenSearch: 'Search screens',
   screenChanged: 'Changed',
-  screenNotOpen: 'Not on the canvas'
+  screenNotOpen: 'Not on the canvas',
+  filterAll: 'All',
+  filterNotOpen: 'To open'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

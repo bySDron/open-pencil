@@ -44,5 +44,7 @@
   "showAllScreens": "すべての画面を表示",
   "screenSearch": "画面を検索",
   "screenChanged": "変更あり",
-  "screenNotOpen": "キャンバスに未配置"
+  "screenNotOpen": "キャンバスに未配置",
+  "filterAll": "すべて",
+  "filterNotOpen": "未配置"
 }

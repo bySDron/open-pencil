@@ -44,5 +44,7 @@
   "showAllScreens": "Mostrar todas las pantallas",
   "screenSearch": "Buscar pantallas",
   "screenChanged": "Cambió",
-  "screenNotOpen": "No está en el lienzo"
+  "screenNotOpen": "No está en el lienzo",
+  "filterAll": "Todas",
+  "filterNotOpen": "Por abrir"
 }

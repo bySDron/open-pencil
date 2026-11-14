@@ -44,5 +44,7 @@
   "showAllScreens": "Pokaż wszystkie ekrany",
   "screenSearch": "Szukaj ekranów",
   "screenChanged": "Zmieniony",
-  "screenNotOpen": "Brak na kanwie"
+  "screenNotOpen": "Brak na kanwie",
+  "filterAll": "Wszystkie",
+  "filterNotOpen": "Do otwarcia"
 }

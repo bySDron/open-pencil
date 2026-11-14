@@ -44,5 +44,7 @@
   "showAllScreens": "Mostrar todas as telas",
   "screenSearch": "Buscar telas",
   "screenChanged": "Mudou",
-  "screenNotOpen": "Fora do canvas"
+  "screenNotOpen": "Fora do canvas",
+  "filterAll": "Todas",
+  "filterNotOpen": "A abrir"
 }

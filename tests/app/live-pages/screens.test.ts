@@ -78,6 +78,28 @@ describe('the screens of the running application', () => {
     expect(screens[0]?.changed).toBe(true)
   })
 
+  test('a frame with a status lists it as the document names it', () => {
+    const screens = screensOf({
+      routes: [HOME],
+      address: ADDRESS,
+      open: [{ nodeId: 'frame', url: 'http://localhost:3000', name: 'Home' }],
+      statusOf: () => ({ name: 'Ready for dev', color: '#14ae5c' })
+    })
+
+    expect(screens[0]?.status).toEqual({ name: 'Ready for dev', color: '#14ae5c' })
+  })
+
+  test('a page the canvas does not show yet has no status to read', () => {
+    const screens = screensOf({
+      routes: [HOME],
+      address: ADDRESS,
+      open: [],
+      statusOf: () => ({ name: 'Ready for dev', color: '#14ae5c' })
+    })
+
+    expect(screens[0]?.status).toBeNull()
+  })
+
   test('an address with a trailing slash still matches its frame', () => {
     const screens = screensOf({
       routes: [HOME],
@@ -97,6 +119,7 @@ const screens: Screen[] = [
     name: 'Home',
     area: '',
     areaTitle: 'Home',
+    status: null,
     changed: false
   },
   {
@@ -106,6 +129,7 @@ const screens: Screen[] = [
     name: 'Pricing',
     area: '',
     areaTitle: 'Home',
+    status: null,
     changed: false
   },
   {
@@ -115,6 +139,7 @@ const screens: Screen[] = [
     name: 'Team',
     area: 'team',
     areaTitle: 'team',
+    status: null,
     changed: true
   }
 ]

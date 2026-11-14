@@ -44,5 +44,7 @@
   "showAllScreens": "显示所有屏幕",
   "screenSearch": "搜索屏幕",
   "screenChanged": "已更改",
-  "screenNotOpen": "不在画布上"
+  "screenNotOpen": "不在画布上",
+  "filterAll": "全部",
+  "filterNotOpen": "待打开"
 }

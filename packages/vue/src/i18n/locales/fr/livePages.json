@@ -44,5 +44,7 @@
   "showAllScreens": "Afficher tous les écrans",
   "screenSearch": "Rechercher des écrans",
   "screenChanged": "Modifié",
-  "screenNotOpen": "Absent du canevas"
+  "screenNotOpen": "Absent du canevas",
+  "filterAll": "Tout",
+  "filterNotOpen": "À ouvrir"
 }

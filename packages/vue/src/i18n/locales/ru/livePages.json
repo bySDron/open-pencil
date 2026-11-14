@@ -44,5 +44,7 @@
   "showAllScreens": "Показать все экраны",
   "screenSearch": "Поиск экранов",
   "screenChanged": "Изменился",
-  "screenNotOpen": "Нет на холсте"
+  "screenNotOpen": "Нет на холсте",
+  "filterAll": "Все",
+  "filterNotOpen": "Открыть"
 }

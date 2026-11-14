@@ -1,6 +1,13 @@
 import { areaOf, areaTitle, groupByArea } from './areas'
 import { routeURL, type RouteInfo } from './routes'
 
+/** A status as the document's own workflow names it, with the colour that workflow gives it. */
+export type ScreenStatus = {
+  name: string
+  /** `#RRGGBB`. */
+  color: string
+}
+
 /** A page of the running application as the panel lists it, shown on the canvas or not. */
 export type Screen = {
   /** The frame that shows the page, or null while the canvas does not hold it yet. */
@@ -14,6 +21,8 @@ export type Screen = {
   /** The part of the address the screen belongs to, and the title its section shows. */
   area: string
   areaTitle: string
+  /** The status the frame shows, or null while it has none. */
+  status: ScreenStatus | null
   /** Whether the page changed since the picture kept for it; false when nothing was compared. */
   changed: boolean
 }
@@ -61,6 +70,42 @@ export type ScreenSource = {
   open: readonly { nodeId: string; url: string; name: string }[]
   /** Whether a page changed since the picture kept for it. */
   changed?: (nodeId: string) => boolean
+  /** The status a frame shows, as the document's workflow names it. */
+  statusOf?: (nodeId: string) => ScreenStatus | null
+}
+
+/** A frame the canvas shows, as the list matches it to the page it answers. */
+export type OpenScreen = { nodeId: string; url: string; name: string }
+
+/** The row one route makes, with the frame that shows it when the canvas holds one. */
+function screenOfRoute(route: RouteInfo, frame: OpenScreen | undefined, source: ScreenSource) {
+  const area = areaOf(route.route)
+  return {
+    nodeId: frame?.nodeId ?? null,
+    path: route.route,
+    url: routeURL(source.address, route.route),
+    name: frame?.name ?? screenName(route.route),
+    area,
+    areaTitle: areaTitle(area),
+    status: frame ? (source.statusOf?.(frame.nodeId) ?? null) : null,
+    changed: frame ? (source.changed?.(frame.nodeId) ?? false) : false
+  } satisfies Screen
+}
+
+/** The row a frame linked by hand makes, for a page the project does not declare. */
+function screenOfFrame(frame: OpenScreen, source: ScreenSource) {
+  const path = pathOf(frame.url)
+  const area = areaOf(path)
+  return {
+    nodeId: frame.nodeId,
+    path,
+    url: frame.url,
+    name: frame.name,
+    area,
+    areaTitle: areaTitle(area),
+    status: source.statusOf?.(frame.nodeId) ?? null,
+    changed: source.changed?.(frame.nodeId) ?? false
+  } satisfies Screen
 }
 
 /**
@@ -71,7 +116,7 @@ export type ScreenSource = {
  * opened by hand is never lost from the list.
  */
 export function screensOf(source: ScreenSource): Screen[] {
-  const shown = new Map<string, { nodeId: string; url: string; name: string }>()
+  const shown = new Map<string, OpenScreen>()
   for (const entry of source.open) shown.set(normalizedURL(entry.url), entry)
 
   const screens: Screen[] = []
@@ -82,30 +127,12 @@ export function screensOf(source: ScreenSource): Screen[] {
     if (url === '') continue
     const key = normalizedURL(url)
     listed.add(key)
-    const frame = shown.get(key)
-    screens.push({
-      nodeId: frame?.nodeId ?? null,
-      path: route.route,
-      url,
-      name: frame?.name ?? screenName(route.route),
-      area: areaOf(route.route),
-      areaTitle: areaTitle(areaOf(route.route)),
-      changed: frame ? (source.changed?.(frame.nodeId) ?? false) : false
-    })
+    screens.push(screenOfRoute(route, shown.get(key), source))
   }
 
   for (const frame of source.open) {
     if (listed.has(normalizedURL(frame.url))) continue
-    const path = pathOf(frame.url)
-    screens.push({
-      nodeId: frame.nodeId,
-      path,
-      url: frame.url,
-      name: frame.name,
-      area: areaOf(path),
-      areaTitle: areaTitle(areaOf(path)),
-      changed: source.changed?.(frame.nodeId) ?? false
-    })
+    screens.push(screenOfFrame(frame, source))
   }
   return screens
 }
