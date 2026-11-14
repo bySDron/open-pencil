@@ -13,10 +13,10 @@ import { useLivePages } from '@/app/live-pages/use'
  * One page of the running application, drawn over the canvas: the frame's own layers stay under
  * it, so a design can be laid on top of the page it replaces.
  *
- * A page is the real application, and the canvas decides how much of it costs anything. A screen
- * in view runs and is drawn as itself; a screen a scroll away still runs, so coming back to it does
- * not start it over; a screen further than that is the picture the list keeps of it. Without that,
- * a canvas of twenty screens is twenty applications, which is what a person feels while zooming.
+ * A page is the real application, and the canvas decides how much of it costs anything. One screen
+ * runs: the one a person is working on. Every other screen is the picture the list keeps of it, so a
+ * canvas of twenty screens is one application and twenty images, and panning or zooming touches no
+ * page at all - which is the whole of what makes an infinite canvas of screens usable.
  *
  * The page is inspected from inside: a script the window injects into every frame answers over
  * `postMessage`, which is the only way a page of another origin can be read at all. This component
@@ -30,6 +30,7 @@ const {
   picking = false,
   running = true,
   awake = true,
+  watched = true,
   nodeId
 } = defineProps<{
   page: LivePage
@@ -44,6 +45,8 @@ const {
   running?: boolean
   /** Whether the page is drawn as itself, or covered by its picture while the view moves. */
   awake?: boolean
+  /** Whether this screen is in the view, which is when its picture is worth taking. */
+  watched?: boolean
   /** The frame this page draws on, which the layer reads back to name the frame that posted. */
   nodeId: string
 }>()
@@ -69,13 +72,22 @@ function register(): void {
 
 /** Ask for the picture a screen is covered by while the view moves, or when it does not run. */
 function askForPicture(): void {
-  thumbnails.request(page.url)
+  if (watched) thumbnails.request(page.url)
 }
 
 onMounted(() => {
   askForPicture()
   if (runs.value) register()
 })
+
+// A screen that comes into the view gets its picture taken, which is what the canvas draws in
+// place of the application itself.
+watch(
+  () => watched,
+  (on) => {
+    if (on) askForPicture()
+  }
+)
 
 onBeforeUnmount(() => {
   registerPageFrame(nodeId, null)

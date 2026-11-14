@@ -14,9 +14,9 @@ import type { PageCapture } from './drift/run'
  * start twelve browsers at once.
  */
 
-/** The size a thumbnail is taken at, which is bigger than it is shown so it stays sharp. */
-export const THUMBNAIL_WIDTH = 480
-export const THUMBNAIL_HEIGHT = 300
+/** The size a picture is taken at, which is bigger than a row shows so the canvas can draw it. */
+export const THUMBNAIL_WIDTH = 960
+export const THUMBNAIL_HEIGHT = 600
 
 /** How long a picture is kept before the page is looked at again. */
 export const THUMBNAIL_TTL_MS = 10 * 60 * 1000

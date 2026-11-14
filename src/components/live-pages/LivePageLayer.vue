@@ -152,13 +152,26 @@ const screens = computed(() =>
   })
 )
 
-/** The screens that run, and the ones drawn as themselves while the rest show their pictures. */
+/** The screens in the view, whose pictures are worth taking: the rest are not looked at. */
 const visibility = computed(() =>
   screensInView(screens.value, placement.value, {
     width: size.width.value,
     height: size.height.value
   })
 )
+
+/**
+ * The one screen that runs its own application: the one a person is working on.
+ *
+ * Every other screen is its picture, drawn by the canvas instead of by a browser of its own. A page
+ * is a whole application - scripts, memory, layout, paint - and a canvas that keeps a page per
+ * screen pays for it on every pan and every zoom. One live page is the price of working on a
+ * screen; a picture is what looking at one costs.
+ */
+const focusedId = computed(() => {
+  const [first] = store.state.selectedIds
+  return first ?? null
+})
 
 /** How long after the last pan or zoom the view still counts as moving. */
 const MOVING_SETTLE_MS = 150
@@ -205,8 +218,9 @@ onBeforeUnmount(() => {
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
         :picking="isPicking"
-        :running="visibility.running.has(entry.nodeId)"
-        :awake="!moving && visibility.shown.has(entry.nodeId)"
+        :running="entry.nodeId === focusedId"
+        :awake="entry.nodeId === focusedId && !moving"
+        :watched="visibility.shown.has(entry.nodeId)"
       />
     </div>
   </div>
