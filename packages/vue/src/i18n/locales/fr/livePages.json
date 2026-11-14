@@ -77,5 +77,11 @@
   "connectFailed": "Le dossier n?a pas pu ?tre lu.",
   "screensNoCommand": "aucune commande de d?marrage",
   "screenLayers": "Calques de l??cran",
-  "screenLayersWaiting": "Lecture des ?l?ments de l??cran?"
+  "screenLayersWaiting": "Lecture des ?l?ments de l??cran?",
+  "screenWidth": "Largeur de l??cran",
+  "widthDesktop": "Bureau",
+  "widthTablet": "Tablette",
+  "widthPhone": "T?l?phone",
+  "screenWidthPick": "Choisissez un ?cran sur le canevas pour fixer sa largeur.",
+  "screenNoAnswer": "La page n?a pas r?pondu. Rechargez-la et r?essayez."
 }

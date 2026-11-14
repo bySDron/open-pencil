@@ -77,5 +77,11 @@
   "connectFailed": "N?o foi poss?vel ler a pasta.",
   "screensNoCommand": "sem comando de in?cio",
   "screenLayers": "Camadas da tela",
-  "screenLayersWaiting": "Lendo os elementos da tela?"
+  "screenLayersWaiting": "Lendo os elementos da tela?",
+  "screenWidth": "Largura da tela",
+  "widthDesktop": "Computador",
+  "widthTablet": "Tablet",
+  "widthPhone": "Telefone",
+  "screenWidthPick": "Escolha uma tela na tela para definir a largura dela.",
+  "screenNoAnswer": "A p?gina n?o respondeu. Recarregue a tela e tente novamente."
 }

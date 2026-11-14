@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { useLivePageMessages } from '@open-pencil/vue/i18n'
 import { vTestId } from '@open-pencil/vue/testing'
@@ -61,8 +61,34 @@ function select(node: PageNode): void {
 
 function refresh(): void {
   collapsed.value = new Set()
+  answered.value = false
   requestPageTree(nodeId)
+  if (timer !== null) clearTimeout(timer)
+  // A page that never answers is one whose script did not run: the panel says so rather than
+  // waiting in silence.
+  timer = setTimeout(() => {
+    answered.value = true
+    timer = null
+  }, ANSWER_TIMEOUT_MS)
 }
+
+/** How long a page is given to describe its elements before the panel stops waiting quietly. */
+const ANSWER_TIMEOUT_MS = 4000
+
+const answered = ref(false)
+let timer: ReturnType<typeof setTimeout> | null = null
+
+watch(nodes, (next) => {
+  if (next.length === 0) return
+  answered.value = false
+  if (timer === null) return
+  clearTimeout(timer)
+  timer = null
+})
+
+onBeforeUnmount(() => {
+  if (timer !== null) clearTimeout(timer)
+})
 
 onMounted(refresh)
 watch(
@@ -137,7 +163,7 @@ function labelOf(node: PageNode): string {
       </div>
 
       <p v-if="nodes.length === 0" class="px-1 py-2 text-2xs leading-snug text-muted">
-        {{ messages.screenLayersWaiting }}
+        {{ answered ? messages.screenNoAnswer : messages.screenLayersWaiting }}
       </p>
     </div>
   </section>

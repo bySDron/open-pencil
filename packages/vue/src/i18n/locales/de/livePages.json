@@ -77,5 +77,11 @@
   "connectFailed": "Der Ordner konnte nicht gelesen werden.",
   "screensNoCommand": "kein Startbefehl",
   "screenLayers": "Ebenen der Seite",
-  "screenLayersWaiting": "Elemente der Seite werden gelesen?"
+  "screenLayersWaiting": "Elemente der Seite werden gelesen?",
+  "screenWidth": "Breite der Seite",
+  "widthDesktop": "Desktop",
+  "widthTablet": "Tablet",
+  "widthPhone": "Telefon",
+  "screenWidthPick": "W?hle eine Seite auf der Fl?che, um ihre Breite zu setzen.",
+  "screenNoAnswer": "Die Seite hat nicht geantwortet. Lade sie neu und versuche es erneut."
 }

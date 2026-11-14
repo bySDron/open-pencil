@@ -88,7 +88,13 @@ export const livePageMessageDefaults = {
   elementColor: 'Text colour',
   elementBackground: 'Background',
   screenLayers: 'Screen layers',
-  screenLayersWaiting: 'Reading the elements of this screen…'
+  screenLayersWaiting: 'Reading the elements of this screen…',
+  screenWidth: 'Screen width',
+  widthDesktop: 'Desktop',
+  widthTablet: 'Tablet',
+  widthPhone: 'Phone',
+  screenWidthPick: 'Select a screen on the canvas to set its width.',
+  screenNoAnswer: 'This page did not answer. Reload the screen, then try again.'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

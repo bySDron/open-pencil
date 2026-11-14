@@ -26,6 +26,7 @@ import { usePageDrift } from '@/app/live-pages/drift/use'
 import { useLivePagesSource } from '@/app/live-pages/open'
 import { isPicking, startPicking, stopPicking } from '@/app/live-pages/pick'
 import type { RouteInfo } from '@/app/live-pages/routes'
+import { readLivePage } from '@/app/live-pages/schema'
 import {
   filterScreens,
   groupScreens,
@@ -35,6 +36,7 @@ import {
   type ScreenStatus
 } from '@/app/live-pages/screens'
 import { useLivePages } from '@/app/live-pages/use'
+import { SCREEN_WIDTHS, resizeScreen, widthKind, type ScreenWidth } from '@/app/live-pages/widths'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import AppInput from '@/components/ui/input/AppInput.vue'
 
@@ -211,6 +213,38 @@ async function repairFrames(): Promise<void> {
 function togglePick(): void {
   if (isPicking.value) stopPicking()
   else startPicking()
+}
+
+/**
+ * The frame of a running page the canvas selection names, which a width applies to. A screen is
+ * a viewport: choosing one here is the page's own responsive layout doing the work.
+ */
+const selectedScreen = computed(() => {
+  void store.state.sceneVersion
+  const [id] = store.state.selectedIds
+  const node = id ? store.graph.getNode(id) : undefined
+  return node && readLivePage(node) !== null ? node : null
+})
+
+/** The widths a person picks between, with the one the selected screen shows now. */
+const widths = computed(() => {
+  const names: Record<string, string> = {
+    desktop: messages.value.widthDesktop,
+    tablet: messages.value.widthTablet,
+    phone: messages.value.widthPhone
+  }
+  const current = selectedScreen.value
+  return SCREEN_WIDTHS.map((width) => ({
+    width,
+    label: names[widthKind(width)] ?? String(width),
+    active: current !== null && widthKind(current.width) === widthKind(width)
+  }))
+})
+
+/** Show the selected screen at a width, which the page live-updates to. */
+function applyWidth(width: ScreenWidth): void {
+  const node = selectedScreen.value
+  if (node !== null) resizeScreen(store, node.id, width)
 }
 
 /** Whether this mounting of the panel already tried to bring the screens up by itself. */
@@ -428,6 +462,30 @@ function dotStyle(screen: Screen) {
           </template>
           {{ isPicking ? messages.pickHint : messages.pickElement }}
         </AppButton>
+        <div class="mt-2">
+          <p class="text-3xs text-muted">{{ messages.screenWidth }}</p>
+          <div class="mt-1 flex flex-wrap gap-1">
+            <button
+              v-for="option in widths"
+              :key="option.width"
+              type="button"
+              class="rounded-full border px-2 py-0.5 text-3xs disabled:opacity-50"
+              :class="
+                option.active
+                  ? 'border-accent/40 bg-accent/15 text-accent'
+                  : 'border-border text-muted hover:text-surface'
+              "
+              :disabled="selectedScreen === null"
+              v-test-id="`screens-width-${option.width}`"
+              @click="applyWidth(option.width)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+          <p v-if="selectedScreen === null" class="mt-1 text-3xs leading-snug text-muted">
+            {{ messages.screenWidthPick }}
+          </p>
+        </div>
         <p
           v-if="connectPhase"
           class="mt-1 text-2xs text-muted"

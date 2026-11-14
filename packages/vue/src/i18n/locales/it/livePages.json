@@ -77,5 +77,11 @@
   "connectFailed": "Non ? stato possibile leggere la cartella.",
   "screensNoCommand": "nessun comando di avvio",
   "screenLayers": "Livelli della schermata",
-  "screenLayersWaiting": "Lettura degli elementi della schermata?"
+  "screenLayersWaiting": "Lettura degli elementi della schermata?",
+  "screenWidth": "Larghezza della schermata",
+  "widthDesktop": "Desktop",
+  "widthTablet": "Tablet",
+  "widthPhone": "Telefono",
+  "screenWidthPick": "Scegli una schermata sulla tela per impostarne la larghezza.",
+  "screenNoAnswer": "La pagina non ha risposto. Ricaricala e riprova."
 }

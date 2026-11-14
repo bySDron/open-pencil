@@ -77,5 +77,11 @@
   "connectFailed": "No se pudo leer la carpeta.",
   "screensNoCommand": "sin comando de arranque",
   "screenLayers": "Capas de la pantalla",
-  "screenLayersWaiting": "Leyendo los elementos de la pantalla?"
+  "screenLayersWaiting": "Leyendo los elementos de la pantalla?",
+  "screenWidth": "Ancho de la pantalla",
+  "widthDesktop": "Escritorio",
+  "widthTablet": "Tableta",
+  "widthPhone": "Tel?fono",
+  "screenWidthPick": "Elige una pantalla en el lienzo para fijar su ancho.",
+  "screenNoAnswer": "La p?gina no respondi?. Rec?rgala e int?ntalo de nuevo."
 }

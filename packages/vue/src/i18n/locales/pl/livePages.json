@@ -77,5 +77,11 @@
   "connectFailed": "Nie uda?o si? odczyta? folderu.",
   "screensNoCommand": "brak polecenia uruchomienia",
   "screenLayers": "Warstwy ekranu",
-  "screenLayersWaiting": "Odczyt element?w ekranu?"
+  "screenLayersWaiting": "Odczyt element?w ekranu?",
+  "screenWidth": "Szeroko?? ekranu",
+  "widthDesktop": "Komputer",
+  "widthTablet": "Tablet",
+  "widthPhone": "Telefon",
+  "screenWidthPick": "Wybierz ekran na p??tnie, aby ustawi? jego szeroko??.",
+  "screenNoAnswer": "Strona nie odpowiedzia?a. Od?wie? ekran i spr?buj ponownie."
 }
