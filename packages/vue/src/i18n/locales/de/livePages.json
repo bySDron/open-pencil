@@ -73,5 +73,6 @@
   "elementClear": "Auswahl aufheben",
   "elementPadding": "Innenabstand",
   "elementColor": "Textfarbe",
-  "elementBackground": "Hintergrund"
+  "elementBackground": "Hintergrund",
+  "connectFailed": "Der Ordner konnte nicht gelesen werden."
 }

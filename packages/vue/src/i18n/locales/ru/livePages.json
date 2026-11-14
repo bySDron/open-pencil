@@ -73,5 +73,6 @@
   "elementClear": "Снять выбор",
   "elementPadding": "Отступы",
   "elementColor": "Цвет текста",
-  "elementBackground": "Фон"
+  "elementBackground": "Фон",
+  "connectFailed": "?? ??????? ????????? ?????."
 }

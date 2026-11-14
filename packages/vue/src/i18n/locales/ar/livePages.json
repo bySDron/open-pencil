@@ -73,5 +73,6 @@
   "elementClear": "إلغاء الاختيار",
   "elementPadding": "الحشو",
   "elementColor": "لون النص",
-  "elementBackground": "الخلفية"
+  "elementBackground": "الخلفية",
+  "connectFailed": "?????? ????? ??????."
 }

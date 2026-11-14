@@ -73,5 +73,6 @@
   "elementClear": "Retirer la sélection",
   "elementPadding": "Marge intérieure",
   "elementColor": "Couleur du texte",
-  "elementBackground": "Fond"
+  "elementBackground": "Fond",
+  "connectFailed": "Le dossier n?a pas pu ?tre lu."
 }

@@ -73,5 +73,6 @@
   "elementClear": "取消选择",
   "elementPadding": "内边距",
   "elementColor": "文字颜色",
-  "elementBackground": "背景"
+  "elementBackground": "背景",
+  "connectFailed": "?????????"
 }

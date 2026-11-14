@@ -16,8 +16,7 @@
         "width": 1280,
         "height": 800,
         "dragDropEnabled": false,
-        "create": false,
-        "additionalBrowserArgs": "--disable-web-security --disable-site-isolation-trials"
+        "create": false
       }
     ],
     "security": {

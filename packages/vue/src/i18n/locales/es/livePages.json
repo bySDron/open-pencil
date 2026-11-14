@@ -73,5 +73,6 @@
   "elementClear": "Quitar selección",
   "elementPadding": "Relleno",
   "elementColor": "Color del texto",
-  "elementBackground": "Fondo"
+  "elementBackground": "Fondo",
+  "connectFailed": "No se pudo leer la carpeta."
 }

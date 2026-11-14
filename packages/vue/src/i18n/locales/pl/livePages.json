@@ -73,5 +73,6 @@
   "elementClear": "Odznacz",
   "elementPadding": "Odstęp wewnętrzny",
   "elementColor": "Kolor tekstu",
-  "elementBackground": "Tło"
+  "elementBackground": "Tło",
+  "connectFailed": "Nie uda?o si? odczyta? folderu."
 }

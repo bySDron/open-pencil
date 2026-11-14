@@ -73,5 +73,6 @@
   "elementClear": "Annulla selezione",
   "elementPadding": "Spaziatura interna",
   "elementColor": "Colore del testo",
-  "elementBackground": "Sfondo"
+  "elementBackground": "Sfondo",
+  "connectFailed": "Non ? stato possibile leggere la cartella."
 }

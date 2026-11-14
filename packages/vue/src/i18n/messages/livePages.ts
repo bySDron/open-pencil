@@ -68,6 +68,7 @@ export const livePageMessageDefaults = {
   connectOpening: 'Opening the screens…',
   connectNotRepository: 'That folder is not inside a git repository.',
   connectUnavailable: 'The folder could not be read.',
+  connectFailed: 'The folder could not be read.',
   connectNoApplication:
     'The project has no command that starts the application. Set it on the project screen.',
   connectNoAddress:

@@ -23,7 +23,6 @@ import {
 } from '@/app/live-pages/copies'
 import { usePageDrift } from '@/app/live-pages/drift/use'
 import { useLivePagesSource } from '@/app/live-pages/open'
-import { isPicking, tryStartPicking } from '@/app/live-pages/pick'
 import type { RouteInfo } from '@/app/live-pages/routes'
 import {
   filterScreens,
@@ -63,20 +62,6 @@ const list = ref<HTMLElement | null>(null)
 /** Whether the document already names the project whose screens it shows. */
 const hasProject = computed(() => source.project.value !== null)
 
-/** Why an element could not be picked, which only a window that refuses the page causes. */
-const pickFailure = ref('')
-
-/**
- * Ask for the next click on a screen to name the element under it. A window that will not hand
- * over the page's own document is said so here, rather than left to a click that does nothing.
- */
-function startPick(): void {
-  if (tryStartPicking()) {
-    pickFailure.value = ''
-    return
-  }
-  pickFailure.value = messages.value.pickUnavailable
-}
 
 /** Why the last connection produced nothing, in the panel's own words. */ const connectFailure =
   computed(() => {
@@ -86,6 +71,8 @@ function startPick(): void {
         return labels.connectNotRepository
       case 'unavailable':
         return labels.connectUnavailable
+      case 'failed':
+        return labels.connectFailed
       case 'no-application':
         return labels.connectNoApplication
       case 'no-address':
@@ -365,6 +352,13 @@ function dotStyle(screen: Screen) {
         >
           {{ connectFailure }}
         </p>
+        <code
+          v-if="connection.reason.value"
+          class="mt-1 block text-3xs leading-snug text-muted"
+          data-test-id="screens-connect-reason"
+        >
+          {{ connection.reason.value }}
+        </code>
       </template>
 
       <template v-else>
@@ -394,27 +388,6 @@ function dotStyle(screen: Screen) {
           data-test-id="screens-connect-failure"
         >
           {{ connectFailure }}
-        </p>
-        <AppButton
-          class="mt-1.5 w-full"
-          size="sm"
-          variant="outline"
-          :disabled="pages.length === 0"
-          data-test-id="screens-pick"
-          @click="startPick"
-        >
-          <template #leading>
-            <icon-lucide-mouse-pointer class="size-3.5" />
-          </template>
-          {{ isPicking ? messages.pickHint : messages.pickElement }}
-        </AppButton>
-        <p
-          v-if="pickFailure"
-          class="mt-1 text-2xs leading-snug text-error"
-          role="alert"
-          data-test-id="screens-pick-failure"
-        >
-          {{ pickFailure }}
         </p>
         <AppInput
           v-model="query"

@@ -73,5 +73,6 @@
   "elementClear": "Limpar seleção",
   "elementPadding": "Recuo interno",
   "elementColor": "Cor do texto",
-  "elementBackground": "Fundo"
+  "elementBackground": "Fundo",
+  "connectFailed": "N?o foi poss?vel ler a pasta."
 }

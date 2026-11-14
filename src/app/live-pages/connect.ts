@@ -29,6 +29,7 @@ export type ConnectFailure =
   | 'cancelled'
   | 'not-repository'
   | 'unavailable'
+  | 'failed'
   | 'no-application'
   | 'no-address'
   | 'no-routes'
@@ -104,6 +105,8 @@ export function useScreensConnection(
 ) {
   const phase = ref<ConnectPhase>('idle')
   const failure = shallowRef<ConnectFailure | null>(null)
+  /** The words the outside gave for a failure, which no message of ours can say better. */
+  const reason = ref('')
 
   /** Whether a connection is under way, so a second press does not start another run. */
   const busy = computed(
@@ -156,15 +159,22 @@ export function useScreensConnection(
   async function connect(): Promise<boolean> {
     if (busy.value) return false
     failure.value = null
+    reason.value = ''
     phase.value = 'choosing'
     const outcome = await io.chooseProject()
     if (outcome.kind !== 'added') {
       if (outcome.kind === 'cancelled') {
         phase.value = 'idle'
         failure.value = 'cancelled'
+      } else if (outcome.kind === 'failed') {
+        // The reason the dialog or the detector gave is what a person can act on, so it is kept.
+        phase.value = 'failed'
+        failure.value = 'failed'
+        reason.value = outcome.reason
       } else {
         phase.value = 'failed'
         failure.value = outcome.kind === 'notRepository' ? 'not-repository' : 'unavailable'
+        reason.value = ''
       }
       return false
     }
@@ -185,7 +195,7 @@ export function useScreensConnection(
     return open(target, fallbackAddress)
   }
 
-  return { phase, failure, busy, connect, ensure, open }
+  return { phase, failure, reason, busy, connect, ensure, open }
 }
 
 export type ScreensConnection = ReturnType<typeof useScreensConnection>
