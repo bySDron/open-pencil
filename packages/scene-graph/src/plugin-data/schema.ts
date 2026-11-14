@@ -35,3 +35,20 @@ export const driftSchema = v.object({
   version: v.literal(1),
   references: v.record(v.string(), driftReferenceSchema)
 })
+
+/**
+ * The branch a screen's copy lives on: work on that screen happens beside the branch a person is
+ * on, and comes back as a patch. The name is checked here, so a document that names a branch git
+ * would refuse is a frame with no copy rather than a command that fails later.
+ */
+export const screenCopySchema = v.object({
+  branch: v.pipe(
+    v.string(),
+    v.trim(),
+    v.nonEmpty(),
+    v.maxLength(200),
+    v.regex(/^(?!-)(?!.*\.\.)[\w./-]+$/)
+  ),
+  /** The moment the copy was made, as an ISO 8601 timestamp. */
+  createdAt: v.pipe(v.string(), v.nonEmpty(), v.maxLength(40))
+})

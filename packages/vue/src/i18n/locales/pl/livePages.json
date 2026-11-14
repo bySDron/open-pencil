@@ -47,5 +47,8 @@
   "screenNotOpen": "Brak na kanwie",
   "filterAll": "Wszystkie",
   "filterNotOpen": "Nieotwarte",
-  "filterChanged": "Zmienione"
+  "filterChanged": "Zmienione",
+  "copyScreen": "Utwórz kopię",
+  "copyFailed": "Nie udało się utworzyć kopii. Sprawdź, czy repozytorium projektu jest czytelne.",
+  "copyNoRepository": "Kopia wymaga dokumentu zapisanego w projekcie."
 }

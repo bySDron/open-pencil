@@ -47,5 +47,8 @@
   "screenNotOpen": "不在画布上",
   "filterAll": "全部",
   "filterNotOpen": "未打开",
-  "filterChanged": "已更改"
+  "filterChanged": "已更改",
+  "copyScreen": "创建副本",
+  "copyFailed": "无法创建副本。请检查项目的仓库是否可读取。",
+  "copyNoRepository": "副本需要保存在项目中的文档。"
 }

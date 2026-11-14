@@ -28,7 +28,7 @@ import {
   withoutPluginData,
   type PluginDataKey
 } from './field'
-import { driftSchema, livePageSchema } from './schema'
+import { driftSchema, livePageSchema, screenCopySchema } from './schema'
 
 const DIRECTIONS = ['AUTO', 'LTR', 'RTL'] as const satisfies readonly (
   | TextDirection
@@ -225,6 +225,8 @@ export const OPEN_PENCIL_PLUGIN_DATA = {
   behaviour: jsonPluginDataField('behaviour', 'content', behaviourSchema),
   /** The page of the running application a frame shows, on a FRAME. */
   livePage: jsonPluginDataField('livePage', 'content', livePageSchema),
+  /** The branch the screen's copy lives on, on the frame that shows it. */
+  screenCopy: jsonPluginDataField('screenCopy', 'content', screenCopySchema),
   /** The icon a frame draws, such as `lucide:home`, on the frame its paths are in. */
   icon: jsonPluginDataField('icon', 'content', iconSchema),
   /** Which of an icon path's paints its icon's color sets, on each path the source drew in it. */

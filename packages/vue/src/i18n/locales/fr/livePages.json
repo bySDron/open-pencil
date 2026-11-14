@@ -47,5 +47,8 @@
   "screenNotOpen": "Absent du canevas",
   "filterAll": "Tout",
   "filterNotOpen": "Non ouverts",
-  "filterChanged": "Modifiés"
+  "filterChanged": "Modifiés",
+  "copyScreen": "Faire une copie",
+  "copyFailed": "La copie n’a pas pu être créée. Vérifiez que le dépôt du projet est lisible.",
+  "copyNoRepository": "Une copie demande un document enregistré dans un projet."
 }

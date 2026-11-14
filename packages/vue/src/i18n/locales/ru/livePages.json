@@ -47,5 +47,8 @@
   "screenNotOpen": "Нет на холсте",
   "filterAll": "Все",
   "filterNotOpen": "Не открыты",
-  "filterChanged": "Изменённые"
+  "filterChanged": "Изменённые",
+  "copyScreen": "Сделать копию",
+  "copyFailed": "Не удалось сделать копию. Проверьте, что репозиторий проекта доступен.",
+  "copyNoRepository": "Для копии нужен документ, сохранённый в проекте."
 }

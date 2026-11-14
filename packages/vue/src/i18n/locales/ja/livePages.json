@@ -47,5 +47,8 @@
   "screenNotOpen": "キャンバスに未配置",
   "filterAll": "すべて",
   "filterNotOpen": "未配置",
-  "filterChanged": "変更あり"
+  "filterChanged": "変更あり",
+  "copyScreen": "コピーを作成",
+  "copyFailed": "コピーを作成できませんでした。プロジェクトのリポジトリを読み取れるか確認してください。",
+  "copyNoRepository": "コピーにはプロジェクト内に保存したドキュメントが必要です。"
 }

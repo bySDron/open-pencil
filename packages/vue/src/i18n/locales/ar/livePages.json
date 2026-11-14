@@ -47,5 +47,8 @@
   "screenNotOpen": "ليست على اللوحة",
   "filterAll": "الكل",
   "filterNotOpen": "غير المفتوحة",
-  "filterChanged": "المتغيّرة"
+  "filterChanged": "المتغيّرة",
+  "copyScreen": "إنشاء نسخة",
+  "copyFailed": "تعذّر إنشاء النسخة. تحقق من إمكانية قراءة مستودع المشروع.",
+  "copyNoRepository": "النسخة تحتاج مستندًا محفوظًا داخل مشروع."
 }

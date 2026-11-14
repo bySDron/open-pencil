@@ -47,5 +47,8 @@
   "screenNotOpen": "No está en el lienzo",
   "filterAll": "Todas",
   "filterNotOpen": "Sin abrir",
-  "filterChanged": "Cambiadas"
+  "filterChanged": "Cambiadas",
+  "copyScreen": "Crear una copia",
+  "copyFailed": "No se pudo crear la copia. Comprueba que el repositorio del proyecto sea legible.",
+  "copyNoRepository": "Una copia necesita un documento guardado dentro de un proyecto."
 }

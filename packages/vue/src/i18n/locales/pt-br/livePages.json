@@ -47,5 +47,8 @@
   "screenNotOpen": "Fora do canvas",
   "filterAll": "Todas",
   "filterNotOpen": "Não abertas",
-  "filterChanged": "Alteradas"
+  "filterChanged": "Alteradas",
+  "copyScreen": "Criar uma cópia",
+  "copyFailed": "Não foi possível criar a cópia. Verifique se o repositório do projeto está legível.",
+  "copyNoRepository": "Uma cópia precisa de um documento salvo dentro de um projeto."
 }
