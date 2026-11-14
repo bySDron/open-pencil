@@ -7,7 +7,6 @@ import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/i
 import { pickedElement } from '@/app/live-pages/pick'
 import type { PagePlacement } from '@/app/live-pages/placement'
 import type { LivePage } from '@/app/live-pages/schema'
-import { onFrameTick } from '@/app/live-pages/ticker'
 import { useLivePages } from '@/app/live-pages/use'
 
 /**
@@ -69,7 +68,8 @@ function register(): void {
 
 onMounted(() => {
   if (runs.value) register()
-  stopPlacing = onFrameTick(place)
+  place()
+  tick()
 })
 
 onBeforeUnmount(() => {
@@ -80,7 +80,24 @@ onBeforeUnmount(() => {
 
 /** Where this page was last drawn, so a frame that has not moved writes nothing. */
 let placed = ''
-let stopPlacing: () => void = () => undefined
+
+/**
+ * Follow the canvas for as long as this page exists.
+ *
+ * The loop is this page's own: a shared one stops for every page when any single reader throws, and
+ * a page that stops being placed is a page left behind at the place a drag began.
+ */
+function tick(): void {
+  place()
+  handle = requestAnimationFrame(tick)
+}
+
+let handle = 0
+
+function stopPlacing(): void {
+  if (handle !== 0) cancelAnimationFrame(handle)
+  handle = 0
+}
 
 /**
  * Put this page where the canvas draws its layer.
