@@ -5,6 +5,10 @@ import { useLivePageMessages, usePanelMessages } from '@open-pencil/vue/i18n'
 
 import { showChatPanel } from '@/app/ai/chat/panel'
 import { startScreenTask } from '@/app/ai/chat/screen-task'
+import { useEditorStore } from '@/app/editor/active-store'
+import { listGitBranches } from '@/app/integrations/git/client'
+import { applyElementToCode, elementInstruction } from '@/app/live-pages/apply'
+import { createScreenCopy } from '@/app/live-pages/copies'
 import type { LiveStyleKey } from '@/app/live-pages/inspect'
 import { LIVE_STYLE_KEYS, selectorOf } from '@/app/live-pages/inspect'
 import { pageTrees, sendToPage } from '@/app/live-pages/inspect-bridge'
@@ -28,7 +32,17 @@ import PanelSection from '@/components/ui/panel/PanelSection.vue'
 const messages = useLivePageMessages()
 const panels = usePanelMessages()
 const source = useLivePagesSource()
+const store = useEditorStore()
 const { picked, styles, written, clearPick, setPickedStyle, resetPickedStyles } = useLivePick()
+
+/** Whether the change is being handed over, so one press is one task. */
+const applying = ref(false)
+
+/** The branches a new copy could collide with, which the copy itself refuses to. */
+async function listBranches(repository: string): Promise<string[]> {
+  const listed = await listGitBranches(repository)
+  return listed.ok ? listed.value.map((branch) => branch.name) : []
+}
 
 /** The elements of the page the picked one belongs to, by id. */
 const tree = computed<Map<string, PageNode>>(() => {
@@ -107,26 +121,39 @@ const changed = computed(() =>
 const selector = computed(() => (picked.value === null ? '' : selectorOf(picked.value.node)))
 
 /**
- * Hand the change to the agent: the element is named by its selector and by the component file the
- * page reports, so the agent edits that element rather than the whole screen.
+ * Hand the change to the agent, in the screen's own copy: the folder it works in is a branch
+ * beside the one a person is on, so the work can be compared and thrown away. A screen that has no
+ * copy gets one now, since asking first would be a second press for the same decision.
  */
-function applyToCode(): void {
+async function applyToCode(): Promise<void> {
   const current = picked.value
-  const repository = source.project.value?.repository
-  if (current === null || repository === undefined || changed.value === '') return
-  const component = current.node.component
-  startScreenTask({
-    folder: repository,
-    prompt: [
-      `In the running application of this project, the element \`${selector.value}\` was changed in the browser to: ${changed.value}.`,
-      component === null ? '' : `The page reports it is rendered by \`${component.file}\`.`,
-      'Make that change in the element’s own source, and only there: a style or a class of that element, not a global one.',
-      'Say which file you changed and why the element you picked is that one.'
-    ]
-      .filter((line) => line !== '')
-      .join(' ')
-  })
-  showChatPanel()
+  if (current === null || changed.value === '') return
+  applying.value = true
+  try {
+    const element = {
+      selector: selector.value,
+      componentFile: current.node.component?.file ?? null,
+      changed: changed.value
+    }
+    const applied = await applyElementToCode(
+      store,
+      { repository: source.project.value?.repository ?? null, nodeId: current.nodeId, element },
+      { listBranches, createCopy: createScreenCopy }
+    )
+    if (applied !== null) {
+      startScreenTask({ folder: applied.copy.path, prompt: applied.prompt })
+      showChatPanel()
+      return
+    }
+    // A document outside a project, or a copy git refused: the project's own folder is the only
+    // place left, and a document with none has nowhere to send a task at all.
+    const folder = source.project.value?.repository
+    if (folder === undefined) return
+    startScreenTask({ folder, prompt: elementInstruction(element) })
+    showChatPanel()
+  } finally {
+    applying.value = false
+  }
 }
 </script>
 
@@ -208,7 +235,8 @@ function applyToCode(): void {
       <AppButton
         size="sm"
         variant="outline"
-        :disabled="changed === '' || source.project.value === null"
+        :disabled="changed === '' || source.project.value === null || applying"
+        :loading="applying"
         data-test-id="live-element-to-code"
         @click="applyToCode"
       >
