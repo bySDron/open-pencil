@@ -7,6 +7,7 @@ import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/i
 import { pickedElement } from '@/app/live-pages/pick'
 import type { PagePlacement } from '@/app/live-pages/placement'
 import type { LivePage } from '@/app/live-pages/schema'
+import { isSuspended } from '@/app/live-pages/suspend'
 import { useLivePages } from '@/app/live-pages/use'
 
 /**
@@ -186,7 +187,7 @@ watch(
       transform: `translate3d(${placement.left}px, ${placement.top}px, 0)`,
       willChange: 'transform',
       // A page out of sight is parked: its layout stays, its paint is skipped, and it keeps running.
-      contentVisibility: parked ? 'hidden' : undefined
+      contentVisibility: parked || isSuspended(nodeId) ? 'hidden' : undefined
     }"
     data-test-id="live-page-frame"
     :data-frame-id="nodeId"

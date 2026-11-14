@@ -9,6 +9,7 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
 import { requestPageTree, sendToPage, setPageTree } from '@/app/live-pages/inspect/bridge'
 import { pageUnderPointer } from '@/app/live-pages/pointer'
+import { resumePages, suspendPage } from '@/app/live-pages/suspend'
 import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect/protocol'
 import {
   isPicking,
@@ -156,6 +157,29 @@ useEventListener(canvas, 'mousemove', (event: MouseEvent) => {
   if (hit !== null) sendToPage(hit.nodeId, { type: 'hoverAt', x: hit.x, y: hit.y })
 })
 
+/**
+ * A layer being moved is drawn by the canvas from a place the graph does not hold, so the page it
+ * carries stands aside for the length of the gesture rather than staying behind at the old place.
+ */
+let movedFrom: { nodeId: string; x: number; y: number } | null = null
+const DRAG_THRESHOLD = 4
+
+useEventListener(canvas, 'mousedown', (event: MouseEvent) => {
+  const hit = pageUnderPointer(event)
+  movedFrom = hit === null ? null : { nodeId: hit.nodeId, x: event.clientX, y: event.clientY }
+})
+
+useEventListener(canvas, 'mousemove', (event: MouseEvent) => {
+  if (movedFrom === null || event.buttons === 0) return
+  const far =
+    Math.abs(event.clientX - movedFrom.x) + Math.abs(event.clientY - movedFrom.y) > DRAG_THRESHOLD
+  if (far) suspendPage(movedFrom.nodeId)
+})
+
+useEventListener(window, 'mouseup', () => {
+  movedFrom = null
+  resumePages()
+})
 useEventListener(canvas, 'click', (event: MouseEvent) => {
   if (!isPicking.value) return
   const hit = pageUnderPointer(event)
