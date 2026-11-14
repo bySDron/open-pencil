@@ -175,6 +175,12 @@ watch(
   { immediate: true }
 )
 
+/** The screen a person is working on: the selected one, whose elements clicks select. */
+const focusedId = computed(() => {
+  const [first] = store.state.selectedIds
+  return first ?? null
+})
+
 /**
  * Where each page is drawn, written to the frame itself once a frame.
  *
@@ -233,7 +239,7 @@ onBeforeUnmount(() => {
         :placement="placementOf(entry)"
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
-        :picking="isPicking"
+        :picking="isPicking && entry.nodeId === focusedId"
         :running="mounted.has(entry.nodeId)"
         :parked="!visibility.shown.has(entry.nodeId)"
       />

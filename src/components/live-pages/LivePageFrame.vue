@@ -73,6 +73,9 @@ onBeforeUnmount(() => {
 function announce(): void {
   register()
   sendToPage(nodeId, { type: 'ping' })
+  // Picking is the mode a screen is opened in, so a page that has just drawn itself is told about
+  // it as well: a page nobody told goes back to swallowing the clicks meant for its elements.
+  if (picking) sendToPage(nodeId, { type: 'start' })
   // The page drew itself again: the element a person had picked is found by its own name, so the
   // panel keeps describing the thing they chose rather than forgetting it on every reload.
   const current = pickedElement.value

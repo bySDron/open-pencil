@@ -22,7 +22,14 @@ const picked = shallowRef<PickedElement | null>(null)
 const styles = ref<Record<string, string> | null>(null)
 /** The values this app wrote onto the element, so they can be taken back off it. */
 const written = ref<Partial<Record<LiveStyleKey, string>>>({})
-const picking = ref(false)
+/**
+ * Whether the next click on a live page picks an element instead of reaching the page.
+ *
+ * It is on by default: a person who opens the screens of their application is there to work on the
+ * elements of it, and having to arm a mode first is a step that does nothing for them. Play - the
+ * mode that hands clicks to the page itself - is what a person turns on instead.
+ */
+const picking = ref(true)
 
 /** Whether the next click on a live page picks an element instead of reaching the page. */
 export const isPicking = picking
@@ -46,15 +53,14 @@ export function stopPicking(): void {
 }
 
 /**
- * Take what a page reported as the picked element. A pick ends the picking mode, so a second press
- * is another pick rather than every click of the canvas changing the panel.
+ * Take what a page reported as the picked element. The mode stays on: a person picks one element,
+ * changes it, and picks the next one beside it, which is what working on a screen is.
  */
 export function pickFromPage(nodeId: string, pick: PagePick): PickedElement {
   const next: PickedElement = { nodeId, node: pick.node, rect: pick.node.rect }
   picked.value = next
   styles.value = pick.styles
   written.value = {}
-  stopPicking()
   return next
 }
 

@@ -56,13 +56,13 @@ test('an element the page picked is what the panel describes', () => {
   expect(writtenStyles.value).toEqual({})
 })
 
-test('a pick ends the mode it was made in', () => {
+test('a pick keeps the mode it was made in, so the next click selects again', () => {
   startPicking()
   expect(isPicking.value).toBe(true)
 
   pickFromPage('frame-a', { node, styles: {} })
 
-  expect(isPicking.value).toBe(false)
+  expect(isPicking.value).toBe(true)
 })
 
 test('a value the panel writes is sent to the page that holds the element', () => {
