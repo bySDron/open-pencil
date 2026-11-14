@@ -74,5 +74,6 @@
   "elementPadding": "Spaziatura interna",
   "elementColor": "Colore del testo",
   "elementBackground": "Sfondo",
-  "connectFailed": "Non ? stato possibile leggere la cartella."
+  "connectFailed": "Non ? stato possibile leggere la cartella.",
+  "screensNoCommand": "nessun comando di avvio"
 }

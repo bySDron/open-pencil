@@ -74,5 +74,6 @@
   "elementPadding": "Odstęp wewnętrzny",
   "elementColor": "Kolor tekstu",
   "elementBackground": "Tło",
-  "connectFailed": "Nie uda?o si? odczyta? folderu."
+  "connectFailed": "Nie uda?o si? odczyta? folderu.",
+  "screensNoCommand": "brak polecenia uruchomienia"
 }

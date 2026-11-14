@@ -62,6 +62,15 @@ const list = ref<HTMLElement | null>(null)
 /** Whether the document already names the project whose screens it shows. */
 const hasProject = computed(() => source.project.value !== null)
 
+/** The repository and application the document is connected to, which a person checks first. */
+const projectLine = computed(() => {
+  const project = source.project.value
+  if (project === null) return ''
+  const directory = project.appDirectory === '' ? 'root' : project.appDirectory
+  const command =
+    project.startCommand.trim() === '' ? messages.value.screensNoCommand : project.startCommand
+  return `${project.repository} · ${directory} · ${command}`
+})
 
 /** Why the last connection produced nothing, in the panel's own words. */ const connectFailure =
   computed(() => {
@@ -362,7 +371,10 @@ function dotStyle(screen: Screen) {
       </template>
 
       <template v-else>
-        <p class="text-2xs leading-snug text-muted">{{ messages.screensHint }}</p>
+        <p class="truncate text-3xs text-muted" data-test-id="screens-project">
+          {{ projectLine }}
+        </p>
+        <p class="mt-1 text-2xs leading-snug text-muted">{{ messages.screensHint }}</p>
         <AppButton
           class="mt-2 w-full"
           size="sm"

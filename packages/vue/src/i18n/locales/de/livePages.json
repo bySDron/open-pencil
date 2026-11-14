@@ -74,5 +74,6 @@
   "elementPadding": "Innenabstand",
   "elementColor": "Textfarbe",
   "elementBackground": "Hintergrund",
-  "connectFailed": "Der Ordner konnte nicht gelesen werden."
+  "connectFailed": "Der Ordner konnte nicht gelesen werden.",
+  "screensNoCommand": "kein Startbefehl"
 }

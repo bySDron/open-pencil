@@ -47,6 +47,7 @@ export const livePageMessageDefaults = {
   screensHint: 'The pages of the project, grouped by the part of the address they belong to.',
   screensNoProject: 'Open a document inside a project to see the screens it runs.',
   screensNoRoutes: 'No pages were found. Check the pages folder of the project.',
+  screensNoCommand: 'no start command',
   screensEmpty: 'No screen matches this filter.',
   showAllScreens: 'Show all screens',
   screenSearch: 'Search screens',

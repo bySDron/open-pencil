@@ -74,5 +74,6 @@
   "elementPadding": "Recuo interno",
   "elementColor": "Cor do texto",
   "elementBackground": "Fundo",
-  "connectFailed": "N?o foi poss?vel ler a pasta."
+  "connectFailed": "N?o foi poss?vel ler a pasta.",
+  "screensNoCommand": "sem comando de in?cio"
 }

@@ -74,5 +74,6 @@
   "elementPadding": "Marge intérieure",
   "elementColor": "Couleur du texte",
   "elementBackground": "Fond",
-  "connectFailed": "Le dossier n?a pas pu ?tre lu."
+  "connectFailed": "Le dossier n?a pas pu ?tre lu.",
+  "screensNoCommand": "aucune commande de d?marrage"
 }

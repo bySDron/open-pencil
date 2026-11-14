@@ -74,5 +74,6 @@
   "elementPadding": "Relleno",
   "elementColor": "Color del texto",
   "elementBackground": "Fondo",
-  "connectFailed": "No se pudo leer la carpeta."
+  "connectFailed": "No se pudo leer la carpeta.",
+  "screensNoCommand": "sin comando de arranque"
 }
