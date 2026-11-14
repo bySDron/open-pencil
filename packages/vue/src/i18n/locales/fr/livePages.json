@@ -46,5 +46,6 @@
   "screenChanged": "Modifié",
   "screenNotOpen": "Absent du canevas",
   "filterAll": "Tout",
-  "filterNotOpen": "À ouvrir"
+  "filterNotOpen": "Non ouverts",
+  "filterChanged": "Modifiés"
 }

@@ -85,7 +85,7 @@ const chips = computed(() => [
   { id: 'all' as const, label: messages.value.filterAll, count: screens.value.length },
   {
     id: 'changed' as const,
-    label: messages.value.screenChanged,
+    label: messages.value.filterChanged,
     count: screens.value.filter((screen) => screen.changed).length
   },
   { id: 'not-open' as const, label: messages.value.filterNotOpen, count: missing.value }

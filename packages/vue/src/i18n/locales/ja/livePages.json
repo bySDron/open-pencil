@@ -46,5 +46,6 @@
   "screenChanged": "変更あり",
   "screenNotOpen": "キャンバスに未配置",
   "filterAll": "すべて",
-  "filterNotOpen": "未配置"
+  "filterNotOpen": "未配置",
+  "filterChanged": "変更あり"
 }

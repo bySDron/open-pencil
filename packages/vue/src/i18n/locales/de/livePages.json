@@ -46,5 +46,6 @@
   "screenChanged": "Geändert",
   "screenNotOpen": "Nicht auf der Leinwand",
   "filterAll": "Alle",
-  "filterNotOpen": "Zu öffnen"
+  "filterNotOpen": "Nicht geöffnet",
+  "filterChanged": "Geändert"
 }

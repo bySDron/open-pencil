@@ -46,5 +46,6 @@
   "screenChanged": "Cambió",
   "screenNotOpen": "No está en el lienzo",
   "filterAll": "Todas",
-  "filterNotOpen": "Por abrir"
+  "filterNotOpen": "Sin abrir",
+  "filterChanged": "Cambiadas"
 }

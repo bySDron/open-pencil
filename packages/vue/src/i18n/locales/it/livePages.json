@@ -46,5 +46,6 @@
   "screenChanged": "Modificata",
   "screenNotOpen": "Non sulla tela",
   "filterAll": "Tutte",
-  "filterNotOpen": "Da aprire"
+  "filterNotOpen": "Non aperte",
+  "filterChanged": "Modificate"
 }

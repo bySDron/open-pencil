@@ -46,5 +46,6 @@
   "screenChanged": "تغيّرت",
   "screenNotOpen": "ليست على اللوحة",
   "filterAll": "الكل",
-  "filterNotOpen": "للفتح"
+  "filterNotOpen": "غير المفتوحة",
+  "filterChanged": "المتغيّرة"
 }

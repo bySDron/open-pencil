@@ -46,5 +46,6 @@
   "screenChanged": "Изменился",
   "screenNotOpen": "Нет на холсте",
   "filterAll": "Все",
-  "filterNotOpen": "Открыть"
+  "filterNotOpen": "Не открыты",
+  "filterChanged": "Изменённые"
 }
