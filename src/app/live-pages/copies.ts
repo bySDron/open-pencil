@@ -5,13 +5,20 @@ import {
   withPluginData
 } from '@open-pencil/scene-graph/plugin-data'
 
-import { runGit, type GitOutcome, type GitTransport } from '@/app/integrations/git/client'
+import {
+  addWorktree,
+  runGit,
+  type GitOutcome,
+  type GitTransport
+} from '@/app/integrations/git/client'
 
 import type { Screen } from './screens'
 
 /** The branch a screen's copy lives on, as its frame records it. */
 export type ScreenCopy = {
   branch: string
+  /** The folder the branch is checked out in, which is where work on that screen happens. */
+  path: string
   /** An ISO 8601 timestamp. */
   createdAt: string
 }
@@ -52,8 +59,22 @@ export function copyBranchName(
 }
 
 /**
- * Make the branch a screen's copy lives on. The branch is made without switching to it, so the
- * work a person is doing in the repository stays where it is, and the copy is a place beside it.
+ * The folder a copy is checked out in: beside the repository, named after its branch, so git never
+ * sees the copy inside the tree it belongs to and a person's own checkout stays where it is.
+ */
+export function copyWorktreePath(repository: string, branch: string): string {
+  const slug = branch.split('/').findLast((segment) => segment !== '') ?? 'copy'
+  const parent = repository
+    .replaceAll(/[\\/]+$/g, '')
+    .split(/[\\/]/)
+    .slice(0, -1)
+    .join('/')
+  return `${parent === '' ? '.' : parent}/${slug}.copy`
+}
+
+/**
+ * Make the folder a screen's copy lives in: its branch, made without switching to it, and a
+ * checkout of that branch beside the repository, where an agent works on that screen alone.
  */
 export async function createScreenCopy(
   repository: string,
@@ -62,9 +83,14 @@ export async function createScreenCopy(
   transport?: GitTransport
 ): Promise<GitOutcome<ScreenCopy>> {
   const branch = copyBranchName(screen, taken)
+  const path = copyWorktreePath(repository, branch)
   // A transport is named only by tests; the panel lets `runGit` reach the desktop's gateway.
   const made = await runGit(repository, 'branch', [branch], transport)
-  return made.ok ? { ok: true, value: { branch, createdAt: new Date().toISOString() } } : made
+  if (!made.ok) return made
+  const checkedOut = await addWorktree(repository, path, branch, transport)
+  return checkedOut.ok
+    ? { ok: true, value: { branch, path, createdAt: new Date().toISOString() } }
+    : checkedOut
 }
 
 /** The copy a frame belongs to, or null while it has none. */

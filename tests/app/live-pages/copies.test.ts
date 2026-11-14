@@ -6,6 +6,7 @@ import type { GitTransport } from '@/app/integrations/git/client'
 import {
   COPY_BRANCH_PREFIX,
   copyBranchName,
+  copyWorktreePath,
   createScreenCopy,
   pluginDataWithScreenCopy,
   readScreenCopy
@@ -64,7 +65,11 @@ describe('a frame’s copy', () => {
     const [page] = graph.getPages()
     if (!page) throw new Error('a new document has a page')
     const node = graph.createNode('FRAME', page.id, { name: 'Pricing' })
-    const copy = { branch: 'op/sales-pricing-2026-11-14', createdAt: DAY.toISOString() }
+    const copy = {
+      branch: 'op/sales-pricing-2026-11-14',
+      path: 'D:/work/sales-pricing-2026-11-14.copy',
+      createdAt: DAY.toISOString()
+    }
 
     graph.updateNode(node.id, { pluginData: pluginDataWithScreenCopy(node, copy) })
 
@@ -87,6 +92,7 @@ describe('a frame’s copy', () => {
     })
     const withCopy = pluginDataWithScreenCopy(node, {
       branch: 'op/x',
+      path: 'D:/work/x.copy',
       createdAt: DAY.toISOString()
     })
     const without = pluginDataWithScreenCopy({ ...node, pluginData: withCopy }, null)
@@ -116,10 +122,14 @@ describe('making a copy', () => {
       transport
     )
 
-    expect(calls).toHaveLength(1)
-    expect(calls[0]?.subcommand).toBe('branch')
+    expect(calls.map((call) => call.subcommand)).toEqual(['branch', 'worktree'])
     expect(calls[0]?.args[0]).toMatch(/^op\/sales-pricing-\d{4}-\d{2}-\d{2}-2$/)
+    // `worktree add <path> <branch>`: the copy is checked out beside the repository.
+    expect(calls[1]?.args[0]).toBe('add')
+    expect(calls[1]?.args[1]).toMatch(/sales-pricing-\d{4}-\d{2}-\d{2}-2\.copy$/)
+    expect(calls[1]?.args[2]).toBe(calls[0]?.args[0] ?? '')
     expect(made.ok ? made.value.branch : '').toMatch(/-2$/)
+    expect(made.ok ? made.value.path : '').toMatch(/\.copy$/)
   })
 
   test('a branch git refuses is a failure, not a copy', async () => {
@@ -127,5 +137,16 @@ describe('making a copy', () => {
       Promise.resolve({ code: 128, stdout: '', stderr: 'fatal: not a git repository' })
 
     expect((await createScreenCopy('/repo', screen(), [], transport)).ok).toBe(false)
+  })
+})
+
+describe('the folder a copy lives in', () => {
+  test('sits beside the repository, named after the branch', () => {
+    expect(copyWorktreePath('/projects/orbit', 'op/sales-pricing-2026-11-14')).toBe(
+      '/projects/sales-pricing-2026-11-14.copy'
+    )
+    expect(copyWorktreePath('D:\\projects\\orbit', 'op/home-2026-11-14')).toBe(
+      'D:/projects/home-2026-11-14.copy'
+    )
   })
 })

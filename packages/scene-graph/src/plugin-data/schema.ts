@@ -49,6 +49,8 @@ export const screenCopySchema = v.object({
     v.maxLength(200),
     v.regex(/^(?!-)(?!.*\.\.)[\w./-]+$/)
   ),
+  /** The folder the branch is checked out in, which is where an agent works on that screen. */
+  path: v.pipe(v.string(), v.trim(), v.nonEmpty(), v.maxLength(4096)),
   /** The moment the copy was made, as an ISO 8601 timestamp. */
   createdAt: v.pipe(v.string(), v.nonEmpty(), v.maxLength(40))
 })
