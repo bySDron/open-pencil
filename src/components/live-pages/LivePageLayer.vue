@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventListener, useElementSize } from '@vueuse/core'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 import { resolveEditorProfile, type EditorProfileInputs, type EditorState } from '@open-pencil/core'
 import type { ViewportTransform } from '@open-pencil/core/geometry'
@@ -174,6 +174,47 @@ watch(
   },
   { immediate: true }
 )
+
+/**
+ * Where each page is drawn, written to the frame itself once a frame.
+ *
+ * A page sits over the canvas, not in it, so it has to follow the layer it belongs to while that
+ * layer is being dragged - and a drag is not an edit: the canvas draws the layers where the drag
+ * put them, and the page has to be there in the same painting, not one commit later. Following the
+ * graph per frame rather than through the store's versions is what puts it there.
+ */
+const lastPlaced = new Map<string, string>()
+let placing = 0
+
+function placePages(): void {
+  const host = root.value
+  if (host !== null) {
+    for (const entry of pages.value) {
+      // Read from the graph itself: a drag moves the layer through a preview the store does not
+      // announce, and a page has to be where the canvas drew the layer in this same painting.
+      const node = store.graph.getNode(entry.nodeId)
+      if (!node) continue
+      const at = store.graph.getAbsolutePosition(entry.nodeId)
+      const key = `${at.x}|${at.y}|${node.width}|${node.height}`
+      if (lastPlaced.get(entry.nodeId) === key) continue
+      const element = host.querySelector<HTMLElement>(`[data-frame-id="${entry.nodeId}"]`)
+      if (element === null) continue
+      element.style.transform = `translate3d(${at.x}px, ${at.y}px, 0)`
+      element.style.width = `${node.width}px`
+      element.style.height = `${node.height}px`
+      lastPlaced.set(entry.nodeId, key)
+    }
+  }
+  placing = requestAnimationFrame(placePages)
+}
+
+onMounted(() => {
+  placing = requestAnimationFrame(placePages)
+})
+
+onBeforeUnmount(() => {
+  cancelAnimationFrame(placing)
+})
 </script>
 
 <template>

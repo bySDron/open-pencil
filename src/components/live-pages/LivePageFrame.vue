@@ -116,7 +116,7 @@ watch(
 
 <template>
   <div
-    class="absolute top-0 left-0 overflow-hidden"
+    class="absolute top-0 inset-s-0 overflow-hidden"
     :class="interactive || picking ? 'pointer-events-auto' : 'pointer-events-none'"
     :style="{
       width: `${placement.width}px`,
@@ -130,6 +130,7 @@ watch(
       contentVisibility: parked ? 'hidden' : undefined
     }"
     data-test-id="live-page-frame"
+    :data-frame-id="nodeId"
   >
     <iframe
       v-if="runs"
