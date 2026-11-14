@@ -75,5 +75,7 @@
   "elementColor": "Textfarbe",
   "elementBackground": "Hintergrund",
   "connectFailed": "Der Ordner konnte nicht gelesen werden.",
-  "screensNoCommand": "kein Startbefehl"
+  "screensNoCommand": "kein Startbefehl",
+  "screenLayers": "Ebenen der Seite",
+  "screenLayersWaiting": "Elemente der Seite werden gelesen?"
 }

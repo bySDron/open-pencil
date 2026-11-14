@@ -86,7 +86,9 @@ export const livePageMessageDefaults = {
   elementClear: 'Clear the pick',
   elementPadding: 'Padding',
   elementColor: 'Text colour',
-  elementBackground: 'Background'
+  elementBackground: 'Background',
+  screenLayers: 'Screen layers',
+  screenLayersWaiting: 'Reading the elements of this screen…'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

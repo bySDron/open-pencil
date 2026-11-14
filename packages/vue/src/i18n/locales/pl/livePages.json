@@ -75,5 +75,7 @@
   "elementColor": "Kolor tekstu",
   "elementBackground": "Tło",
   "connectFailed": "Nie uda?o si? odczyta? folderu.",
-  "screensNoCommand": "brak polecenia uruchomienia"
+  "screensNoCommand": "brak polecenia uruchomienia",
+  "screenLayers": "Warstwy ekranu",
+  "screenLayersWaiting": "Odczyt element?w ekranu?"
 }

@@ -75,5 +75,7 @@
   "elementColor": "Couleur du texte",
   "elementBackground": "Fond",
   "connectFailed": "Le dossier n?a pas pu ?tre lu.",
-  "screensNoCommand": "aucune commande de d?marrage"
+  "screensNoCommand": "aucune commande de d?marrage",
+  "screenLayers": "Calques de l??cran",
+  "screenLayersWaiting": "Lecture des ?l?ments de l??cran?"
 }

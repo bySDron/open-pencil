@@ -24,6 +24,7 @@ import {
 } from '@/app/live-pages/copies'
 import { usePageDrift } from '@/app/live-pages/drift/use'
 import { useLivePagesSource } from '@/app/live-pages/open'
+import { isPicking, startPicking, stopPicking } from '@/app/live-pages/pick'
 import type { RouteInfo } from '@/app/live-pages/routes'
 import {
   filterScreens,
@@ -201,6 +202,15 @@ async function repairFrames(): Promise<void> {
   if (base === '') return
   const reachable = await reachableAddress(base)
   if (reachable !== '') source.realign(reachable)
+}
+
+/**
+ * One press makes the next click on a screen name the element under it; a second press leaves the
+ * page to itself again. The page's own inspector reports what was picked.
+ */
+function togglePick(): void {
+  if (isPicking.value) stopPicking()
+  else startPicking()
 }
 
 /** Whether this mounting of the panel already tried to bring the screens up by itself. */
@@ -403,6 +413,20 @@ function dotStyle(screen: Screen) {
           @click="showAll"
         >
           {{ messages.showAllScreens }}
+        </AppButton>
+        <!-- A screen is a page of the running application: one press makes its elements pickable. -->
+        <AppButton
+          class="mt-1.5 w-full"
+          size="sm"
+          variant="outline"
+          :disabled="pages.length === 0"
+          data-test-id="screens-pick"
+          @click="togglePick"
+        >
+          <template #leading>
+            <icon-lucide-mouse-pointer class="size-3.5" />
+          </template>
+          {{ isPicking ? messages.pickHint : messages.pickElement }}
         </AppButton>
         <p
           v-if="connectPhase"

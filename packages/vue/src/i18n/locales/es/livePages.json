@@ -75,5 +75,7 @@
   "elementColor": "Color del texto",
   "elementBackground": "Fondo",
   "connectFailed": "No se pudo leer la carpeta.",
-  "screensNoCommand": "sin comando de arranque"
+  "screensNoCommand": "sin comando de arranque",
+  "screenLayers": "Capas de la pantalla",
+  "screenLayersWaiting": "Leyendo los elementos de la pantalla?"
 }

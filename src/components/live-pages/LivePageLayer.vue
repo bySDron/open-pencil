@@ -7,7 +7,9 @@ import type { ViewportTransform } from '@open-pencil/core/geometry'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
-import { isPicking, pickedElement, pickElement, stopPicking } from '@/app/live-pages/pick'
+import { requestPageTree, setPageTree } from '@/app/live-pages/inspect-bridge'
+import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect-protocol'
+import { isPicking, pickFromPage, stylesFromPage, stopPicking } from '@/app/live-pages/pick'
 import { layerTransform } from '@/app/live-pages/placement'
 import { useLivePageSelection } from '@/app/live-pages/selection'
 import { useLivePages } from '@/app/live-pages/use'
@@ -18,6 +20,9 @@ import LivePageFrame from './LivePageFrame.vue'
  * The pages of the running application, laid over the canvas at its pan and zoom. The layer takes
  * no pointer while editing, so selecting and panning stay the canvas's; a previewing pane hands
  * the pointer to the page itself.
+ *
+ * It is also where a page's own answers arrive: the inspector inside every frame reports what a
+ * person pointed at, what the page's elements are, and what changed, all over `postMessage`.
  */
 const {
   view,
@@ -41,18 +46,6 @@ const placement = computed(() => drawn ?? view)
 const transform = computed(() => layerTransform(placement.value))
 const interactive = computed(() => resolveEditorProfile(view).live !== null)
 const root = ref<HTMLElement | null>(null)
-
-/** The box a frame draw around the element its page reported, in that page's own pixels. */
-function outlineOf(nodeId: string) {
-  const current = pickedElement.value
-  return current !== null && current.nodeId === nodeId ? current.rect : null
-}
-
-/** A picked element is the frame's own selection too, so the panel on the right describes it. */
-function onPick(nodeId: string, element: Element): void {
-  store.select([nodeId])
-  pickElement(nodeId, element)
-}
 
 // Escape leaves the picking mode, as it leaves every mode the canvas puts a person in.
 useEventListener(window, 'keydown', (event: KeyboardEvent) => {
@@ -84,9 +77,35 @@ function reportingFrame(source: MessageEventSource | null): string | null {
   return null
 }
 
+/** What the inspector in a page answered. */
+function onInspect(nodeId: string, message: InspectMessage): void {
+  if (message.type === 'tree') {
+    setPageTree(nodeId, message.nodes)
+    return
+  }
+  if (message.type === 'ready') {
+    requestPageTree(nodeId)
+    return
+  }
+  if (message.type === 'picked') {
+    // A picked element is the frame's own selection too, so the panel describes that screen.
+    store.select([nodeId])
+    pickFromPage(nodeId, message.pick)
+    return
+  }
+  if (message.type === 'styles') {
+    stylesFromPage(nodeId, message.styles, message.rect)
+  }
+}
+
 function onMessage(event: MessageEvent): void {
   const nodeId = reportingFrame(event.source)
   if (nodeId === null || !origins.value.has(event.origin)) return
+  const inspect = readInspectMessage(event.data)
+  if (inspect !== null) {
+    onInspect(nodeId, inspect)
+    return
+  }
   const picked = readLiveSelection(event.data)
   if (picked !== null) setSelection(nodeId, picked)
 }
@@ -117,8 +136,6 @@ function forwardWheel(event: WheelEvent) {
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
         :picking="isPicking"
-        :selected="outlineOf(entry.nodeId)"
-        @pick="onPick"
       />
     </div>
   </div>

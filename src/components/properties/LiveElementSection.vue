@@ -39,18 +39,21 @@ const fields = computed<{ key: LiveStyleKey; label: string }[]>(() => [
 ])
 
 /** What the fields show: the values the page has now, edited here until they are committed. */
-const draft = ref<Record<LiveStyleKey, string>>(emptyDraft())
+const draft = ref<Record<LiveStyleKey, string>>(keysOf(null))
 watch(
   styles,
   (next) => {
-    draft.value = next === null ? emptyDraft() : { ...next }
+    draft.value = keysOf(next)
   },
   { immediate: true }
 )
 
-/** A row with nothing typed in it yet, so every field starts from a value the page can hold. */
-function emptyDraft(): Record<LiveStyleKey, string> {
-  return Object.fromEntries(LIVE_STYLE_KEYS.map((key) => [key, ''])) as Record<LiveStyleKey, string>
+/** The values the page reported, taken only for the keys this panel shows. */
+function keysOf(values: Record<string, string> | null): Record<LiveStyleKey, string> {
+  return Object.fromEntries(LIVE_STYLE_KEYS.map((key) => [key, values?.[key] ?? ''])) as Record<
+    LiveStyleKey,
+    string
+  >
 }
 
 /** A value reaches the page when the field is left or Enter is pressed, not on every letter. */
@@ -65,7 +68,7 @@ const changed = computed(() =>
     .join('; ')
 )
 
-const selector = computed(() => (picked.value === null ? '' : selectorOf(picked.value.info)))
+const selector = computed(() => (picked.value === null ? '' : selectorOf(picked.value.node)))
 
 /**
  * Hand the change to the agent: the element is named by its selector and by the component file the
@@ -75,7 +78,7 @@ function applyToCode(): void {
   const current = picked.value
   const repository = source.project.value?.repository
   if (current === null || repository === undefined || changed.value === '') return
-  const component = current.info.component
+  const component = current.node.component
   startScreenTask({
     folder: repository,
     prompt: [
@@ -116,11 +119,11 @@ function applyToCode(): void {
         {{ selector }}
       </code>
       <span
-        v-if="picked.info.component"
+        v-if="picked.node.component"
         class="max-w-28 shrink-0 truncate text-3xs text-muted"
         data-test-id="live-element-component"
       >
-        {{ picked.info.component.name }}
+        {{ picked.node.component.name }}
       </span>
     </div>
 

@@ -75,5 +75,7 @@
   "elementColor": "Colore del testo",
   "elementBackground": "Sfondo",
   "connectFailed": "Non ? stato possibile leggere la cartella.",
-  "screensNoCommand": "nessun comando di avvio"
+  "screensNoCommand": "nessun comando di avvio",
+  "screenLayers": "Livelli della schermata",
+  "screenLayersWaiting": "Lettura degli elementi della schermata?"
 }

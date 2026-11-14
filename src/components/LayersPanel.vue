@@ -6,12 +6,15 @@ import { computed, ref } from 'vue'
 import { useI18n, useLivePageMessages } from '@open-pencil/vue/i18n'
 import { vTestId } from '@open-pencil/vue/testing'
 
+import { useEditorStore } from '@/app/editor/active-store'
+import { readLivePage } from '@/app/live-pages/schema'
 import AppMenu from '@/components/shell/AppMenu.vue'
 import SegmentedControl from '@/components/ui/select/SegmentedControl.vue'
 import splitterTheme from '@/theme/splitter'
 
 import AssetsPanel from './assets-panel/AssetsPanel.vue'
 import LayerTree from './LayerTree/LayerTree.vue'
+import LiveLayersSection from './live-pages/LiveLayersSection.vue'
 import ScreensPanel from './live-pages/ScreensPanel.vue'
 import PagesPanel from './PagesPanel.vue'
 
@@ -37,6 +40,18 @@ const panelTestIds: Record<string, string> = {
   assets: 'left-panel-assets-tab'
 }
 const panelTabsUI = { root: 'w-full' }
+
+/**
+ * The frame whose page is being looked at, if the canvas selection is a live screen: its elements
+ * are the layers a designer works with, and the panel asks the page for them itself.
+ */
+const store = useEditorStore()
+const liveNodeId = computed(() => {
+  void store.state.sceneVersion
+  const [id] = store.state.selectedIds
+  const node = id ? store.graph.getNode(id) : undefined
+  return node && readLivePage(node) !== null ? node.id : ''
+})
 const splitterStyles = tv(splitterTheme)({ direction: 'vertical' })
 </script>
 
@@ -87,6 +102,8 @@ const splitterStyles = tv(splitterTheme)({ direction: 'vertical' })
         >
           {{ panels.layers }}
         </header>
+        <!-- A screen is a page of the running application, and its elements are its layers. -->
+        <LiveLayersSection v-if="liveNodeId" :node-id="liveNodeId" />
         <LayerTree data-test-id="layers-tree" />
       </SplitterPanel>
     </SplitterGroup>

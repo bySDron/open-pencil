@@ -75,5 +75,7 @@
   "elementColor": "Cor do texto",
   "elementBackground": "Fundo",
   "connectFailed": "N?o foi poss?vel ler a pasta.",
-  "screensNoCommand": "sem comando de in?cio"
+  "screensNoCommand": "sem comando de in?cio",
+  "screenLayers": "Camadas da tela",
+  "screenLayersWaiting": "Lendo os elementos da tela?"
 }
