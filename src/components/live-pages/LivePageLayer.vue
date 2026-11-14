@@ -7,7 +7,8 @@ import type { ViewportTransform } from '@open-pencil/core/geometry'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
-import { requestPageTree, setPageTree } from '@/app/live-pages/inspect/bridge'
+import { requestPageTree, sendToPage, setPageTree } from '@/app/live-pages/inspect/bridge'
+import { pageUnderPointer } from '@/app/live-pages/pointer'
 import { readInspectMessage, type InspectMessage } from '@/app/live-pages/inspect/protocol'
 import {
   isPicking,
@@ -142,6 +143,25 @@ function forwardWheel(event: WheelEvent) {
   canvas.dispatchEvent(new WheelEvent(event.type, event))
 }
 
+/** How often the element under the pointer is asked for, which is often enough to follow it. */
+const HOVER_INTERVAL_MS = 60
+let hoveredAt = 0
+
+useEventListener(canvas, 'mousemove', (event: MouseEvent) => {
+  if (!isPicking.value) return
+  const now = performance.now()
+  if (now - hoveredAt < HOVER_INTERVAL_MS) return
+  hoveredAt = now
+  const hit = pageUnderPointer(event)
+  if (hit !== null) sendToPage(hit.nodeId, { type: 'hoverAt', x: hit.x, y: hit.y })
+})
+
+useEventListener(canvas, 'click', (event: MouseEvent) => {
+  if (!isPicking.value) return
+  const hit = pageUnderPointer(event)
+  if (hit !== null) sendToPage(hit.nodeId, { type: 'pickAt', x: hit.x, y: hit.y })
+})
+
 const size = useElementSize(root)
 
 /** The screens of this layer as the canvas places them, which is what decides what they cost. */
@@ -201,7 +221,6 @@ const focusedId = computed(() => {
         :interactive="interactive"
         :picking="isPicking && entry.nodeId === focusedId"
         :focused="entry.nodeId === focusedId"
-        :canvas="canvas"
         :running="mounted.has(entry.nodeId)"
         :parked="!visibility.shown.has(entry.nodeId)"
       />
