@@ -83,5 +83,11 @@
   "widthTablet": "Tablet",
   "widthPhone": "Telefon",
   "screenWidthPick": "Wybierz ekran na p??tnie, aby ustawi? jego szeroko??.",
-  "screenNoAnswer": "Strona nie odpowiedzia?a. Od?wie? ekran i spr?buj ponownie."
+  "screenNoAnswer": "Strona nie odpowiedzia?a. Od?wie? ekran i spr?buj ponownie.",
+  "copyChanges": "Zmiany w kopii",
+  "copyChangesNone": "Nic jeszcze nie zmieniono.",
+  "copyChangesShow": "Poka? diff",
+  "copyChangesDiscard": "Odrzu? wszystko",
+  "copyChangesCancel": "Anuluj",
+  "copyChangesRefresh": "Od?wie?"
 }

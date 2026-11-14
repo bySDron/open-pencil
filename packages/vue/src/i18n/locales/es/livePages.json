@@ -83,5 +83,11 @@
   "widthTablet": "Tableta",
   "widthPhone": "Tel?fono",
   "screenWidthPick": "Elige una pantalla en el lienzo para fijar su ancho.",
-  "screenNoAnswer": "La p?gina no respondi?. Rec?rgala e int?ntalo de nuevo."
+  "screenNoAnswer": "La p?gina no respondi?. Rec?rgala e int?ntalo de nuevo.",
+  "copyChanges": "Cambios en la copia",
+  "copyChangesNone": "Todav?a no hay cambios.",
+  "copyChangesShow": "Ver el diff",
+  "copyChangesDiscard": "Descartar todo",
+  "copyChangesCancel": "Cancelar",
+  "copyChangesRefresh": "Actualizar"
 }

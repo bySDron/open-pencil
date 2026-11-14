@@ -37,6 +37,7 @@ import {
 } from '@/app/live-pages/screens'
 import { useLivePages } from '@/app/live-pages/use'
 import { SCREEN_WIDTHS, resizeScreen, widthKind, type ScreenWidth } from '@/app/live-pages/widths'
+import CopyChangesSection from '@/components/live-pages/CopyChangesSection.vue'
 import AppButton from '@/components/ui/button/AppButton.vue'
 import AppInput from '@/components/ui/input/AppInput.vue'
 
@@ -226,26 +227,32 @@ const selectedScreen = computed(() => {
   return node && readLivePage(node) !== null ? node : null
 })
 
-/** The widths a person picks between, with the one the selected screen shows now. */
-const widths = computed(() => {
-  const names: Record<string, string> = {
-    desktop: messages.value.widthDesktop,
-    tablet: messages.value.widthTablet,
-    phone: messages.value.widthPhone
-  }
-  const current = selectedScreen.value
-  return SCREEN_WIDTHS.map((width) => ({
-    width,
-    label: names[widthKind(width)] ?? String(width),
-    active: current !== null && widthKind(current.width) === widthKind(width)
-  }))
-})
+/** The widths a person picks between, with the one the selected screen shows now. */ const widths =
+  computed(() => {
+    const names: Record<string, string> = {
+      desktop: messages.value.widthDesktop,
+      tablet: messages.value.widthTablet,
+      phone: messages.value.widthPhone
+    }
+    const current = selectedScreen.value
+    return SCREEN_WIDTHS.map((width) => ({
+      width,
+      label: names[widthKind(width)] ?? String(width),
+      active: current !== null && widthKind(current.width) === widthKind(width)
+    }))
+  })
 
 /** Show the selected screen at a width, which the page live-updates to. */
 function applyWidth(width: ScreenWidth): void {
   const node = selectedScreen.value
   if (node !== null) resizeScreen(store, node.id, width)
 }
+
+/** The copy of the selected screen, whose work the panel lists as a diff. */
+const selectedCopy = computed<ScreenCopy | null>(() => {
+  const node = selectedScreen.value
+  return node === null ? null : readScreenCopy(node)
+})
 
 /** Whether this mounting of the panel already tried to bring the screens up by itself. */
 const autoTried = ref(false)
@@ -486,6 +493,12 @@ function dotStyle(screen: Screen) {
             {{ messages.screenWidthPick }}
           </p>
         </div>
+        <!-- The work an agent did on the selected screen's copy, a diff away from the branch. -->
+        <CopyChangesSection
+          v-if="selectedCopy"
+          :copy-path="selectedCopy.path"
+          :branch="selectedCopy.branch"
+        />
         <p
           v-if="connectPhase"
           class="mt-1 text-2xs text-muted"

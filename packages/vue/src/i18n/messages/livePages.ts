@@ -94,7 +94,13 @@ export const livePageMessageDefaults = {
   widthTablet: 'Tablet',
   widthPhone: 'Phone',
   screenWidthPick: 'Select a screen on the canvas to set its width.',
-  screenNoAnswer: 'This page did not answer. Reload the screen, then try again.'
+  screenNoAnswer: 'This page did not answer. Reload the screen, then try again.',
+  copyChanges: 'Changes in the copy',
+  copyChangesNone: 'Nothing has changed yet.',
+  copyChangesShow: 'Show the diff',
+  copyChangesDiscard: 'Discard everything',
+  copyChangesCancel: 'Cancel',
+  copyChangesRefresh: 'Refresh'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

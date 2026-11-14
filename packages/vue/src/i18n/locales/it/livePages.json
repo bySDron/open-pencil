@@ -83,5 +83,11 @@
   "widthTablet": "Tablet",
   "widthPhone": "Telefono",
   "screenWidthPick": "Scegli una schermata sulla tela per impostarne la larghezza.",
-  "screenNoAnswer": "La pagina non ha risposto. Ricaricala e riprova."
+  "screenNoAnswer": "La pagina non ha risposto. Ricaricala e riprova.",
+  "copyChanges": "Modifiche nella copia",
+  "copyChangesNone": "Non ? ancora cambiato nulla.",
+  "copyChangesShow": "Mostra il diff",
+  "copyChangesDiscard": "Annulla tutto",
+  "copyChangesCancel": "Annulla",
+  "copyChangesRefresh": "Aggiorna"
 }

@@ -83,5 +83,11 @@
   "widthTablet": "Tablet",
   "widthPhone": "Telefon",
   "screenWidthPick": "W?hle eine Seite auf der Fl?che, um ihre Breite zu setzen.",
-  "screenNoAnswer": "Die Seite hat nicht geantwortet. Lade sie neu und versuche es erneut."
+  "screenNoAnswer": "Die Seite hat nicht geantwortet. Lade sie neu und versuche es erneut.",
+  "copyChanges": "?nderungen der Kopie",
+  "copyChangesNone": "Noch nichts ge?ndert.",
+  "copyChangesShow": "Diff zeigen",
+  "copyChangesDiscard": "Alles verwerfen",
+  "copyChangesCancel": "Abbrechen",
+  "copyChangesRefresh": "Aktualisieren"
 }
