@@ -40,6 +40,10 @@
   ])
   const MAX_DEPTH = 14
   const MAX_NODES = 800
+  // Asking a page for its elements reads a computed style per node, which the page's own scripts
+  // have to wait for. A real application is large, so the walk stops when the budget runs out and
+  // answers with what it reached: a shorter list beats a frame that stops responding.
+  const WALK_BUDGET_MS = 40
   const TEXT_LIMIT = 60
   const CLASS_LIMIT = 3
 
@@ -47,7 +51,12 @@
   let hovered = null
   let picked = null
   let elements = []
-  const written = new Map()
+  /** The values written onto each element, so they can be taken back off that same element. */
+  const writtenByElement = new WeakMap()
+  /** Every element this app has changed, since a reset promises to leave the page as its code draws it. */
+  const touched = new Set()
+  /** The values written onto the picked element, which is what the panel shows as its own. */
+  let written = new Map()
 
   const overlay = document.createElement('div')
   overlay.setAttribute('data-openpencil-inspect', 'overlay')
@@ -79,6 +88,15 @@
     if (!parent) return
     if (!overlay.isConnected) parent.appendChild(overlay)
     if (!hoverBox.isConnected) parent.appendChild(hoverBox)
+  }
+
+  // The boxes belong to a page only while something is picked: a page the app stopped inspecting
+  // keeps none of this script's elements.
+  function unmountOverlay() {
+    if (overlay.isConnected) overlay.remove()
+    if (hoverBox.isConnected) hoverBox.remove()
+    overlay.style.display = 'none'
+    hoverBox.style.display = 'none'
   }
 
   function rectOf(element) {
@@ -156,14 +174,44 @@
     return true
   }
 
+  // The boxes this script draws belong to it, not to the page: a picked element whose overlay is
+  // showing would otherwise be listed as one of the page's own layers.
+  function ownBox(element) {
+    return (
+      typeof element.hasAttribute === 'function' &&
+      element.hasAttribute('data-openpencil-inspect')
+    )
+  }
+
+  /** The place an element holds in the tree the app was last shown. */
+  function nodeIdOf(element) {
+    const index = elements.indexOf(element)
+    return index === -1 ? '' : String(index)
+  }
+
+  /** The id of the nearest ancestor that tree holds, which is what a breadcrumb climbs. */
+  function nodeParentIdOf(element) {
+    let parent = element.parentElement
+    while (parent) {
+      const index = elements.indexOf(parent)
+      if (index !== -1) return String(index)
+      parent = parent.parentElement
+    }
+    return null
+  }
+
   function walk(root) {
     const nodes = []
     elements = []
     const queue = [{ element: root, parentId: null, depth: 0 }]
-    while (queue.length > 0 && nodes.length < MAX_NODES) {
-      const item = queue.shift()
+    const deadline = Date.now() + WALK_BUDGET_MS
+    let cursor = 0
+    while (cursor < queue.length && nodes.length < MAX_NODES && Date.now() < deadline) {
+      const item = queue[cursor]
+      cursor += 1
       const element = item.element
       if (SKIPPED.has(element.tagName)) continue
+      if (item.depth > 0 && ownBox(element)) continue
       if (item.depth > 0 && !visible(element)) continue
       const id = String(nodes.length)
       nodes.push(describe(element, id, item.parentId, item.depth))
@@ -185,6 +233,9 @@
 
   function pick(element, reveal) {
     picked = element
+    // The panel describes the values of one element: those still on the element it left stay there,
+    // and a reset takes them back along with everything else this app wrote.
+    written = writtenByElement.get(element) || new Map()
     mountOverlay()
     // A person who picked from a list may be looking somewhere else on the page: the element is
     // brought into view, which a click never needs since it was already under the pointer.
@@ -192,7 +243,15 @@
       element.scrollIntoView({ block: 'center', inline: 'center' })
     }
     place(overlay, rectOf(element))
-    send('picked', { pick: { node: describe(element, '', null, 0), styles: readStyles(element) } })
+    // The place the element holds is what the breadcrumb of its ancestors and the highlighted row
+    // of the layer list are drawn from, so a page nobody has listed yet is walked once here.
+    if (elements.length === 0) walk(document.body || document.documentElement)
+    send('picked', {
+      pick: {
+        node: describe(element, nodeIdOf(element), nodeParentIdOf(element), 0),
+        styles: readStyles(element)
+      }
+    })
   }
 
   function pickAt(x, y) {
@@ -238,8 +297,33 @@
 
   function clear() {
     stop()
+    takeBackWritten()
     picked = null
-    overlay.style.display = 'none'
+    unmountOverlay()
+  }
+
+  /** Take back every value this app wrote, on whichever element it wrote it. */
+  function takeBackWritten() {
+    for (const element of Array.from(touched)) {
+      const map = writtenByElement.get(element)
+      if (map) {
+        for (const key of map.keys()) element.style.removeProperty(key)
+      }
+      writtenByElement.delete(element)
+    }
+    touched.clear()
+    written = new Map()
+  }
+
+  /** Keep the values of the picked element where a reset can find them again. */
+  function remember(element) {
+    if (written.size === 0) {
+      writtenByElement.delete(element)
+      touched.delete(element)
+      return
+    }
+    writtenByElement.set(element, written)
+    touched.add(element)
   }
 
   function applyStyle(key, value) {
@@ -251,19 +335,34 @@
       picked.style.setProperty(key, value)
       written.set(key, value)
     }
+    remember(picked)
     send('styles', { styles: readStyles(picked), rect: rectOf(picked) })
   }
 
   function resetStyles() {
+    takeBackWritten()
     if (!picked) return
-    for (const key of written.keys()) picked.style.removeProperty(key)
-    written.clear()
     send('styles', { styles: readStyles(picked), rect: rectOf(picked) })
+  }
+
+  /** An element found again by the name the app kept of it, or null for a name the page cannot answer. */
+  function findBySelector(selector) {
+    if (typeof selector !== 'string' || selector === '') return null
+    try {
+      return document.querySelector(selector)
+    } catch {
+      // A name a browser cannot read - a class left unescaped, say - is a page that keeps its own
+      // element: there is nothing to find, and nothing here may break the page over it.
+      return null
+    }
   }
 
   function onMessage(event) {
     const data = event.data
     if (!data || typeof data !== 'object' || data.source !== HOST) return
+    // Only the window that embedded this frame drives the inspector: a page often embeds frames of
+    // its own, and this script runs in those too.
+    if (event.source && event.source !== window.parent) return
     switch (data.type) {
       case 'ping':
         send('ready', {})
@@ -285,7 +384,7 @@
       case 'pickSelector': {
         // A page that has reloaded is a new document: the element a person had picked is found
         // again by its own name, so the panel keeps describing the thing they chose.
-        const found = document.querySelector(data.selector)
+        const found = findBySelector(data.selector)
         if (found) pick(found, true)
         break
       }

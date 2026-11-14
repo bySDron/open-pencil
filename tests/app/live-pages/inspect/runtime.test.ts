@@ -15,23 +15,28 @@ import { readInspectMessage } from '@/app/live-pages/inspect/protocol'
 
 const SOURCE = readFileSync(repoPath('desktop/src/inspect/runtime.js'), 'utf8')
 
-/** One element of the fake page. */
+/** One element of the fake page, keeping the values written onto it the way a page does. */
 function element(
   tag: string,
   options: { classes?: string[]; text?: string; rect?: Rect; children?: unknown[] } = {}
 ) {
+  const inline = new Map<string, string>()
   return {
     tagName: tag.toUpperCase(),
     classList: options.classes ?? [],
     childNodes: options.text === undefined ? [] : [{ nodeType: 3, nodeValue: options.text }],
     children: options.children ?? [],
+    /** The values the inspector wrote onto this element, by CSS property. */
+    inline,
     style: {
-      setProperty: () => undefined,
-      removeProperty: () => undefined
+      setProperty: (key: string, value: string) => inline.set(key, value),
+      removeProperty: (key: string) => inline.delete(key)
     },
     isConnected: true,
     appendChild: () => undefined,
     setAttribute: () => undefined,
+    remove: () => undefined,
+    hasAttribute: () => false,
     getBoundingClientRect: () =>
       asDouble<DOMRect>(options.rect ?? { x: 0, y: 0, width: 10, height: 10 })
   }
@@ -51,6 +56,8 @@ function page() {
   })
   const box = element('div', { classes: ['card'], children: [button] })
   const body = element('body', { children: [box] })
+  Object.assign(button, { parentElement: box })
+  Object.assign(box, { parentElement: body })
 
   const posted: unknown[] = []
   const listeners: ((event: MessageEvent) => void)[] = []
@@ -63,8 +70,14 @@ function page() {
     addEventListener: () => undefined,
     removeEventListener: () => undefined,
     elementFromPoint: () => button,
-    // A page that reloaded is asked for the element by its own name.
-    querySelector: (selector: string) => (selector.startsWith('button') ? button : null),
+    // A page that reloaded is asked for the element by its own name, and a browser throws on a name
+    // it cannot read, which a page does as well.
+    querySelector: (selector: string) => {
+      if (selector.includes(':') && !selector.includes('\\:')) {
+        throw new Error(`'${selector}' is not a valid selector`)
+      }
+      return selector.startsWith('button') ? button : null
+    },
     defaultView: null
   }
   const window = {
@@ -89,7 +102,7 @@ function page() {
       listener(asDouble<MessageEvent>({ data: { source: 'open-pencil-host', ...request } }))
     }
   }
-  return { posted, ask, revealed }
+  return { posted, ask, revealed, button, box }
 }
 
 test('the inspector answers with the elements of the page, as the app reads them', () => {
@@ -160,4 +173,41 @@ test('the page says it is ready, and says nothing to a request it does not know'
   expect(readInspectMessage({ source: 'open-pencil-inspect', type: 'ready', payload: {} })).toEqual(
     { type: 'ready' }
   )
+})
+
+test('a picked element says where it sits, so its ancestors can be climbed', () => {
+  const subject = page()
+  subject.ask({ type: 'tree' })
+
+  subject.ask({ type: 'select', id: '2' })
+
+  const picked = readInspectMessage(subject.posted.at(-1))
+  if (picked?.type !== 'picked') throw new Error('the page answered no pick')
+  // The row of the layer list and the breadcrumb of the panel are drawn from these two.
+  expect(picked.pick.node.id).toBe('2')
+  expect(picked.pick.node.parentId).toBe('1')
+})
+
+test('a name the page cannot read leaves the page standing rather than breaking it', () => {
+  const subject = page()
+  const before = subject.posted.length
+
+  expect(() => subject.ask({ type: 'pickSelector', selector: '.md:flex' })).not.toThrow()
+
+  expect(subject.posted).toHaveLength(before)
+})
+
+test('a reset takes back every value this app wrote, on whichever element it wrote it', () => {
+  const subject = page()
+  subject.ask({ type: 'tree' })
+  subject.ask({ type: 'select', id: '2' })
+  subject.ask({ type: 'style', key: 'color', value: 'rgb(255, 0, 0)' })
+  // A person moves on to the box around it and changes that instead.
+  subject.ask({ type: 'select', id: '1' })
+  subject.ask({ type: 'style', key: 'padding', value: '8px' })
+
+  subject.ask({ type: 'reset' })
+
+  expect(subject.button.inline.size).toBe(0)
+  expect(subject.box.inline.size).toBe(0)
 })

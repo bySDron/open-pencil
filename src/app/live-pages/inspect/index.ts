@@ -52,13 +52,34 @@ export const LIVE_STYLE_KEYS: readonly LiveStyleKey[] = [
 /** How many of an element's classes are named before the rest are dropped. */
 const CLASS_LIMIT = 3
 
+/** Everything a name may hold as it stands; the rest is escaped with a backslash. */
+const UNSAFE_IN_NAME = /[^a-zA-Z0-9_-]/g
+
+/** A name that starts with a digit would read as a number, so it is spelled out by its code. */
+const STARTS_WITH_DIGIT = /^[0-9]/
+
+/**
+ * A tag or class name spelled the way CSS writes it down.
+ *
+ * The classes of a real application are full of characters a selector cannot hold as they are -
+ * `md:flex`, `w-1/2`, `2xl:grid-cols-3` - and a selector built from them as they stand is not just
+ * a selector that finds nothing: asking a page for it throws there. So every class is escaped
+ * before it is written into one.
+ */
+export function escapeName(name: string): string {
+  const escaped = name.replace(UNSAFE_IN_NAME, (char) => `\\${char}`)
+  if (!STARTS_WITH_DIGIT.test(escaped)) return escaped
+  // `\32 ` is the digit 2 followed by the space that ends the code, as CSS reads it.
+  return `\\3${escaped.charAt(0)} ${escaped.slice(1)}`
+}
+
 /** A selector a person can paste into the page's own dev tools to find the element again. */
 export function selectorOf(node: PageNode): string {
   const classes = node.classes
     .slice(0, CLASS_LIMIT)
-    .map((name) => `.${name}`)
+    .map((name) => `.${escapeName(name)}`)
     .join('')
-  return `${node.tag}${classes}`
+  return `${escapeName(node.tag)}${classes}`
 }
 
 /** The element's own name in a layer row: its selector, or the words it shows. */

@@ -1,6 +1,6 @@
 import { ref, shallowRef } from 'vue'
 
-import type { LiveRect, LiveStyleKey } from '../inspect'
+import { LIVE_STYLE_KEYS, type LiveRect, type LiveStyleKey } from '../inspect'
 import { sendToPage } from '../inspect/bridge'
 import type { PageNode, PagePick } from '../inspect/protocol'
 
@@ -74,19 +74,33 @@ export function clearPick(): void {
   written.value = {}
 }
 
+/** The written values without one of them, since a value taken back is no longer written. */
+function withoutKey(
+  written: Partial<Record<LiveStyleKey, string>>,
+  key: LiveStyleKey
+): Partial<Record<LiveStyleKey, string>> {
+  const next: Partial<Record<LiveStyleKey, string>> = {}
+  for (const name of LIVE_STYLE_KEYS) {
+    const value = written[name]
+    if (name !== key && value !== undefined) next[name] = value
+  }
+  return next
+}
+
 /** Write one value onto the picked element, which the page shows at once. */
 export function setPickedStyle(key: LiveStyleKey, value: string): void {
   const current = picked.value
   if (current === null) return
-  sendToPage(current.nodeId, { type: 'style', key, value })
-  written.value = { ...written.value, [key]: value }
+  // A page that is gone never saw the value, so the panel must not report it as one of its own.
+  if (!sendToPage(current.nodeId, { type: 'style', key, value })) return
+  written.value = value === '' ? withoutKey(written.value, key) : { ...written.value, [key]: value }
 }
 
 /** Take back every value this app wrote, leaving the page's own styles in place. */
 export function resetPickedStyles(): void {
   const current = picked.value
   if (current === null) return
-  sendToPage(current.nodeId, { type: 'reset' })
+  if (!sendToPage(current.nodeId, { type: 'reset' })) return
   written.value = {}
 }
 

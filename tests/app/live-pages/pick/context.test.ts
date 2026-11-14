@@ -1,5 +1,8 @@
 import { beforeEach, expect, test } from 'bun:test'
 
+import { asDouble } from '@open-pencil/test-support/doubles'
+
+import { registerPageFrame } from '@/app/live-pages/inspect/bridge'
 import type { PageNode } from '@/app/live-pages/inspect/protocol'
 import { clearPick, pickFromPage, setPickedStyle } from '@/app/live-pages/pick'
 import { changedValues, pickedScreenElement } from '@/app/live-pages/pick/context'
@@ -15,8 +18,22 @@ const node: PageNode = {
   component: { name: 'SaveButton', file: '/app/components/SaveButton.vue' }
 }
 
+/** A frame that still draws a page, keeping what the panel sends it. */
+function liveFrame(nodeId: string): unknown[] {
+  const sent: unknown[] = []
+  const frame = {
+    closed: false,
+    postMessage: (message: unknown) => sent.push(message)
+  }
+  registerPageFrame(nodeId, asDouble<Window>(frame))
+  return sent
+}
+
+let sent: unknown[] = []
+
 beforeEach(() => {
   clearPick()
+  sent = liveFrame('frame-a')
 })
 
 test('nothing picked is nothing a request carries', () => {
@@ -41,4 +58,26 @@ test('the values the panel changed on it travel with it, in the order they were 
   setPickedStyle('color', 'rgb(255, 0, 0)')
 
   expect(pickedScreenElement()?.changed).toBe('padding: 4px 8px; color: rgb(255, 0, 0)')
+  // The page is the one that shows the change, so it is the one asked to make it.
+  expect(sent).toHaveLength(2)
+  expect(JSON.stringify(sent)).toContain('"key":"color"')
+})
+
+test('a value taken back is no longer one of the changes', () => {
+  pickFromPage('frame-a', { node, styles: {} })
+  setPickedStyle('color', 'rgb(255, 0, 0)')
+
+  setPickedStyle('color', '')
+
+  expect(pickedScreenElement()?.changed).toBe('')
+})
+
+test('a page that is gone is not reported as changed', () => {
+  pickFromPage('frame-a', { node, styles: {} })
+  registerPageFrame('frame-a', null)
+
+  setPickedStyle('color', 'rgb(255, 0, 0)')
+
+  expect(pickedScreenElement()?.changed).toBe('')
+  expect(sent).toHaveLength(0)
 })
