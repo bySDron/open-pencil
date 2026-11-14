@@ -116,13 +116,16 @@ watch(
 
 <template>
   <div
-    class="absolute overflow-hidden"
+    class="absolute top-0 left-0 overflow-hidden"
     :class="interactive || picking ? 'pointer-events-auto' : 'pointer-events-none'"
     :style="{
-      left: `${placement.left}px`,
-      top: `${placement.top}px`,
       width: `${placement.width}px`,
       height: `${placement.height}px`,
+      // A page is moved the way the canvas moves a layer under it: by transform, which the compositor
+      // applies without laying the page out again. Moved by its offset instead, a page keeps its old
+      // surface painted under the new place until the drag ends, which reads as a ghost of itself.
+      transform: `translate3d(${placement.left}px, ${placement.top}px, 0)`,
+      willChange: 'transform',
       // A page out of sight is parked: its layout stays, its paint is skipped, and it keeps running.
       contentVisibility: parked ? 'hidden' : undefined
     }"
