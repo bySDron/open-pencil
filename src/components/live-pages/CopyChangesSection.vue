@@ -36,14 +36,19 @@ const asking = ref<'bring' | 'discard' | null>(null)
 const outcome = ref('')
 const brought = ref(0)
 
-/** What a copy holds now, which is what an agent left there. */
+/** What a copy holds now, read without the busy flag: an action that just ran is still busy. */
+async function load(): Promise<void> {
+  changes.value = await copyChanges(copyPath)
+  diff.value = ''
+  shown.value = ''
+}
+
+/** Read the copy for a person who asked for it, which a read already running wins. */
 async function refresh(): Promise<void> {
   if (busy.value) return
   busy.value = true
   try {
-    changes.value = await copyChanges(copyPath)
-    diff.value = ''
-    shown.value = ''
+    await load()
     asking.value = null
   } finally {
     busy.value = false
@@ -76,8 +81,8 @@ async function bring(): Promise<void> {
     )
     if (taken.ok) {
       brought.value = taken.files.length
+      await load()
       outcome.value = messages.value.copyChangesBrought
-      await refresh()
       outcome.value = messages.value.copyChangesBrought
     } else {
       outcome.value =
@@ -98,7 +103,7 @@ async function discard(): Promise<void> {
   outcome.value = ''
   try {
     await discardCopyChanges(copyPath)
-    await refresh()
+    await load()
   } finally {
     busy.value = false
     asking.value = null
