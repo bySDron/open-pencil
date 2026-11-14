@@ -53,6 +53,14 @@ export type InspectRequest =
   | { type: 'select'; id: string }
   /** Find an element again by its own name, which a page that reloaded has to do. */
   | { type: 'pickSelector'; selector: string }
+  /**
+   * Take the element at a point of the page, which the canvas asks for: a page sits under a layer
+   * that keeps the pointer for panning and zooming, so a click is sent to the page by its place
+   * rather than reaching it as an event.
+   */
+  | { type: 'pickAt'; x: number; y: number }
+  /** Mark the element at a point of the page, which is what a pointer over a screen shows. */
+  | { type: 'hoverAt'; x: number; y: number }
   | { type: 'style'; key: LiveStyleKey; value: string }
   | { type: 'reset' }
   | { type: 'clear' }

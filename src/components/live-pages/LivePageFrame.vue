@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import type { Vector } from '@open-pencil/scene-graph/primitives'
+
 import { useEditorStore } from '@/app/editor/active-store'
 import { selectorOf } from '@/app/live-pages/inspect'
 import { clearPageTree, registerPageFrame, sendToPage } from '@/app/live-pages/inspect/bridge'
@@ -32,6 +34,8 @@ const {
   picking = false,
   running = true,
   parked = false,
+  focused = false,
+  canvas = null,
   nodeId
 } = defineProps<{
   page: LivePage
@@ -46,6 +50,10 @@ const {
   running?: boolean
   /** Whether the page is out of sight, and so left undrawn while it keeps running. */
   parked?: boolean
+  /** Whether this screen is the one a person is working on. */
+  focused?: boolean
+  /** The canvas a gesture over this page belongs to. */
+  canvas?: HTMLElement | null
   /** The frame this page draws on, which the layer reads back to name the frame that posted. */
   nodeId: string
 }>()
@@ -78,6 +86,65 @@ onBeforeUnmount(() => {
 /** Where this page was last drawn, so a frame that has not moved writes nothing. */
 let placed = ''
 let stopPlacing: () => void = () => undefined
+
+/** A point inside a page, in the page's own pixels. */
+type PagePoint = Vector
+
+/** Where the pointer went down on the shield, so a click is told from a drag. */
+let pressed: PagePoint | null = null
+let hoveredAt = 0
+
+/** A point of the page, from a point of the window: the page is drawn scaled with the canvas. */
+function pagePoint(event: MouseEvent): PagePoint | null {
+  const box = wrapper.value
+  if (box === null || placement.width === 0) return null
+  const rect = box.getBoundingClientRect()
+  const zoom = rect.width / placement.width
+  if (zoom <= 0) return null
+  return { x: (event.clientX - rect.left) / zoom, y: (event.clientY - rect.top) / zoom }
+}
+
+/**
+ * The shield: the layer of this page that keeps the pointer.
+ *
+ * A page is a document of its own, so every gesture over it belongs to it - the wheel would scroll a
+ * screen instead of zooming the canvas, and a drag would scroll the page instead of moving the
+ * frame. A screen a person works on therefore sits under this shield: the wheel and the drag go to
+ * the canvas, and the element under the pointer is found by sending its place into the page.
+ */
+function onShieldDown(event: MouseEvent): void {
+  pressed = { x: event.clientX, y: event.clientY }
+  // The canvas starts a drag from a mousedown on itself and follows it on the window, where the
+  // moves this shield sees still pass.
+  canvas?.dispatchEvent(
+    new MouseEvent('mousedown', {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      bubbles: true,
+      button: 0,
+      buttons: 1
+    })
+  )
+}
+
+function onShieldMove(event: MouseEvent): void {
+  const now = performance.now()
+  if (now - hoveredAt < 60) return
+  hoveredAt = now
+  const point = pagePoint(event)
+  if (point !== null) sendToPage(nodeId, { type: 'hoverAt', x: point.x, y: point.y })
+}
+
+function onShieldUp(event: MouseEvent): void {
+  const start = pressed
+  pressed = null
+  const dragged =
+    start !== null &&
+    Math.abs(event.clientX - start.x) + Math.abs(event.clientY - start.y) > 4
+  if (dragged) return
+  const point = pagePoint(event)
+  if (point !== null) sendToPage(nodeId, { type: 'pickAt', x: point.x, y: point.y })
+}
 
 /**
  * Put this page where the canvas draws its layer.
@@ -154,7 +221,7 @@ watch(
   <div
     ref="wrapper"
     class="absolute top-0 inset-s-0 overflow-hidden"
-    :class="interactive || picking ? 'pointer-events-auto' : 'pointer-events-none'"
+    :class="interactive || focused ? 'pointer-events-auto' : 'pointer-events-none'"
     :style="{
       width: `${placement.width}px`,
       height: `${placement.height}px`,
@@ -182,6 +249,14 @@ watch(
       loading="lazy"
       data-test-id="live-page-iframe"
       @load="announce"
+    />
+    <div
+      v-if="runs && picking"
+      class="absolute inset-0"
+      data-test-id="live-page-shield"
+      @mousedown="onShieldDown"
+      @mousemove="onShieldMove"
+      @mouseup="onShieldUp"
     />
   </div>
 </template>

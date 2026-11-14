@@ -389,6 +389,18 @@
         if (found) pick(found, true)
         break
       }
+      case 'pickAt': {
+        // The canvas keeps the pointer for panning and zooming, so a click arrives as a place in
+        // the page rather than as an event the page sees.
+        const element = pickAt(Number(data.x), Number(data.y))
+        if (element) pick(element)
+        break
+      }
+      case 'hoverAt': {
+        const element = pickAt(Number(data.x), Number(data.y))
+        place(hoverBox, element ? rectOf(element) : null)
+        break
+      }
       case 'style':
         applyStyle(data.key, data.value)
         break

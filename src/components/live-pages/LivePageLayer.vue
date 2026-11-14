@@ -200,6 +200,8 @@ const focusedId = computed(() => {
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
         :picking="isPicking && entry.nodeId === focusedId"
+        :focused="entry.nodeId === focusedId"
+        :canvas="canvas"
         :running="mounted.has(entry.nodeId)"
         :parked="!visibility.shown.has(entry.nodeId)"
       />
