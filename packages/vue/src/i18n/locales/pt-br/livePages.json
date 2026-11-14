@@ -35,5 +35,14 @@
   "sidecarEmpty": "Este documento ainda não tem referências para gravar.",
   "sidecarMissing": "O projeto não guarda referências para este documento.",
   "sidecarOtherDocument": "As referências do projeto pertencem a outro documento.",
-  "sidecarUnavailable": "As referências são gravadas no projeto e lidas dele no aplicativo de desktop."
+  "sidecarUnavailable": "As referências são gravadas no projeto e lidas dele no aplicativo de desktop.",
+  "screens": "Telas",
+  "screensHint": "As páginas do projeto, agrupadas pela parte do endereço a que pertencem.",
+  "screensNoProject": "Abra um documento dentro de um projeto para ver as telas dele.",
+  "screensNoRoutes": "Nenhuma página encontrada. Verifique a pasta pages do projeto.",
+  "screensEmpty": "Nenhuma tela corresponde a este filtro.",
+  "showAllScreens": "Mostrar todas as telas",
+  "screenSearch": "Buscar telas",
+  "screenChanged": "Mudou",
+  "screenNotOpen": "Fora do canvas"
 }

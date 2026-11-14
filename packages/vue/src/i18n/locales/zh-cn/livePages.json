@@ -35,5 +35,14 @@
   "sidecarEmpty": "此文档还没有可写入的基准图。",
   "sidecarMissing": "项目中没有此文档的基准图。",
   "sidecarOtherDocument": "项目中的基准图属于另一个文档。",
-  "sidecarUnavailable": "基准图在桌面应用中写入项目并从项目读取。"
+  "sidecarUnavailable": "基准图在桌面应用中写入项目并从项目读取。",
+  "screens": "屏幕",
+  "screensHint": "项目中的页面，按地址所属的部分分组。",
+  "screensNoProject": "在项目中打开文档即可看到它运行的屏幕。",
+  "screensNoRoutes": "没有找到页面。请检查项目的页面目录。",
+  "screensEmpty": "没有屏幕符合此筛选。",
+  "showAllScreens": "显示所有屏幕",
+  "screenSearch": "搜索屏幕",
+  "screenChanged": "已更改",
+  "screenNotOpen": "不在画布上"
 }

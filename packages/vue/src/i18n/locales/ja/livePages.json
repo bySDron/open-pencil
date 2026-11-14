@@ -35,5 +35,14 @@
   "sidecarEmpty": "このドキュメントには書き込める基準画像がまだありません。",
   "sidecarMissing": "プロジェクトにはこのドキュメントの基準画像がありません。",
   "sidecarOtherDocument": "プロジェクトの基準画像は別のドキュメントのものです。",
-  "sidecarUnavailable": "基準画像の書き込みと読み込みはデスクトップアプリで行います。"
+  "sidecarUnavailable": "基準画像の書き込みと読み込みはデスクトップアプリで行います。",
+  "screens": "画面",
+  "screensHint": "プロジェクトのページを、アドレスの部分ごとにまとめます。",
+  "screensNoProject": "プロジェクト内のドキュメントを開くと、その画面が表示されます。",
+  "screensNoRoutes": "ページが見つかりません。プロジェクトのページフォルダーを確認してください。",
+  "screensEmpty": "この絞り込みに合う画面はありません。",
+  "showAllScreens": "すべての画面を表示",
+  "screenSearch": "画面を検索",
+  "screenChanged": "変更あり",
+  "screenNotOpen": "キャンバスに未配置"
 }

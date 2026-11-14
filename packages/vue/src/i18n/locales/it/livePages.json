@@ -35,5 +35,14 @@
   "sidecarEmpty": "Questo documento non ha ancora riferimenti da scrivere.",
   "sidecarMissing": "Il progetto non contiene riferimenti per questo documento.",
   "sidecarOtherDocument": "I riferimenti del progetto appartengono a un altro documento.",
-  "sidecarUnavailable": "I riferimenti vengono scritti in un progetto e letti da esso nell’app desktop."
+  "sidecarUnavailable": "I riferimenti vengono scritti in un progetto e letti da esso nell’app desktop.",
+  "screens": "Schermate",
+  "screensHint": "Le pagine del progetto, raggruppate per parte dell’indirizzo.",
+  "screensNoProject": "Apri un documento dentro un progetto per vedere le sue schermate.",
+  "screensNoRoutes": "Nessuna pagina trovata. Controlla la cartella pages del progetto.",
+  "screensEmpty": "Nessuna schermata corrisponde a questo filtro.",
+  "showAllScreens": "Mostra tutte le schermate",
+  "screenSearch": "Cerca schermate",
+  "screenChanged": "Modificata",
+  "screenNotOpen": "Non sulla tela"
 }

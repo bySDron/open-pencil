@@ -35,5 +35,14 @@
   "sidecarEmpty": "Este documento aún no tiene referencias que escribir.",
   "sidecarMissing": "El proyecto no guarda referencias para este documento.",
   "sidecarOtherDocument": "Las referencias del proyecto pertenecen a otro documento.",
-  "sidecarUnavailable": "Las referencias se escriben en un proyecto y se leen de él en la aplicación de escritorio."
+  "sidecarUnavailable": "Las referencias se escriben en un proyecto y se leen de él en la aplicación de escritorio.",
+  "screens": "Pantallas",
+  "screensHint": "Las páginas del proyecto, agrupadas por la parte del domicilio a la que pertenecen.",
+  "screensNoProject": "Abre un documento dentro de un proyecto para ver sus pantallas.",
+  "screensNoRoutes": "No se encontraron páginas. Revisa la carpeta pages del proyecto.",
+  "screensEmpty": "Ninguna pantalla coincide con este filtro.",
+  "showAllScreens": "Mostrar todas las pantallas",
+  "screenSearch": "Buscar pantallas",
+  "screenChanged": "Cambió",
+  "screenNotOpen": "No está en el lienzo"
 }

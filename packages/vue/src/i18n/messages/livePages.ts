@@ -42,7 +42,16 @@ export const livePageMessageDefaults = {
   sidecarEmpty: 'This document has no baseline to write yet.',
   sidecarMissing: 'The project keeps no baselines for this document.',
   sidecarOtherDocument: 'The project’s baselines belong to another document.',
-  sidecarUnavailable: 'Baselines are written to and read from a project in the desktop app.'
+  sidecarUnavailable: 'Baselines are written to and read from a project in the desktop app.',
+  screens: 'Screens',
+  screensHint: 'The pages of the project, grouped by the part of the address they belong to.',
+  screensNoProject: 'Open a document inside a project to see the screens it runs.',
+  screensNoRoutes: 'No pages were found. Check the pages folder of the project.',
+  screensEmpty: 'No screen matches this filter.',
+  showAllScreens: 'Show all screens',
+  screenSearch: 'Search screens',
+  screenChanged: 'Changed',
+  screenNotOpen: 'Not on the canvas'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

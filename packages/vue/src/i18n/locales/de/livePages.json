@@ -35,5 +35,14 @@
   "sidecarEmpty": "Dieses Dokument hat noch keine Referenz zum Schreiben.",
   "sidecarMissing": "Das Projekt enthält keine Referenzen für dieses Dokument.",
   "sidecarOtherDocument": "Die Referenzen im Projekt gehören zu einem anderen Dokument.",
-  "sidecarUnavailable": "Referenzen werden in der Desktop-App in ein Projekt geschrieben und daraus gelesen."
+  "sidecarUnavailable": "Referenzen werden in der Desktop-App in ein Projekt geschrieben und daraus gelesen.",
+  "screens": "Bildschirme",
+  "screensHint": "Die Seiten des Projekts, nach ihrem Adressteil gruppiert.",
+  "screensNoProject": "Öffne ein Dokument in einem Projekt, um seine Bildschirme zu sehen.",
+  "screensNoRoutes": "Keine Seiten gefunden. Prüfe den pages-Ordner des Projekts.",
+  "screensEmpty": "Kein Bildschirm passt zu diesem Filter.",
+  "showAllScreens": "Alle Bildschirme zeigen",
+  "screenSearch": "Bildschirme suchen",
+  "screenChanged": "Geändert",
+  "screenNotOpen": "Nicht auf der Leinwand"
 }

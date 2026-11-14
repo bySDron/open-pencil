@@ -35,5 +35,14 @@
   "sidecarEmpty": "Ten dokument nie ma jeszcze wzorców do zapisania.",
   "sidecarMissing": "Projekt nie zachowuje wzorców dla tego dokumentu.",
   "sidecarOtherDocument": "Wzorce w projekcie należą do innego dokumentu.",
-  "sidecarUnavailable": "Wzorce są zapisywane w projekcie i wczytywane z niego w aplikacji desktopowej."
+  "sidecarUnavailable": "Wzorce są zapisywane w projekcie i wczytywane z niego w aplikacji desktopowej.",
+  "screens": "Ekrany",
+  "screensHint": "Strony projektu pogrupowane według części adresu.",
+  "screensNoProject": "Otwórz dokument w projekcie, aby zobaczyć jego ekrany.",
+  "screensNoRoutes": "Nie znaleziono stron. Sprawdź folder pages w projekcie.",
+  "screensEmpty": "Żaden ekran nie pasuje do tego filtra.",
+  "showAllScreens": "Pokaż wszystkie ekrany",
+  "screenSearch": "Szukaj ekranów",
+  "screenChanged": "Zmieniony",
+  "screenNotOpen": "Brak na kanwie"
 }
