@@ -44,12 +44,26 @@ export function useLivePages(options: { pageId?: () => string } = {}) {
     // A frame can be moved, resized, or relinked without the page itself changing.
     void store.state.sceneVersion
     const pageId = options.pageId?.() ?? store.state.currentPageId
-    return store.graph.getChildren(pageId).flatMap((node) => {
-      if (!node.visible || !canShowLivePage(node)) return []
-      const page = readLivePage(node)
-      if (!page) return []
-      return [{ nodeId: node.id, page, node, at: store.graph.getAbsolutePosition(node.id) }]
-    })
+    const at = (nodeId: string) => store.graph.getAbsolutePosition(nodeId)
+    /**
+     * The pages a layer holds: its own frame's page, or the pages of the frames under the section
+     * around it. Pages are opened into sections, and a section gives no coordinate space of its
+     * own, so a page inside one sits where its frame does on the page.
+     */
+    function collect(node: SceneNode): LivePageEntry[] {
+      if (!node.visible) return []
+      if (canShowLivePage(node)) {
+        const page = readLivePage(node)
+        if (!page) return []
+        return [{ nodeId: node.id, page, node, at: at(node.id) }]
+      }
+      if (node.type !== 'SECTION') return []
+      return node.childIds.flatMap((id) => {
+        const child = store.graph.getNode(id)
+        return child ? collect(child) : []
+      })
+    }
+    return store.graph.getChildren(pageId).flatMap(collect)
   })
 
   /** Where a page draws: its frame's border box in the layer's own pixels. */

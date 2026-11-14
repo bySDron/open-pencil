@@ -5,7 +5,8 @@ import { readRepositoryRoot, runGit } from '@/app/integrations/git/client'
 import { normalizePath } from '@/app/projects/schema'
 import { useProjects } from '@/app/projects/store'
 
-import { gridPosition } from './grid'
+import { areaOf, groupByArea } from './areas'
+import { layoutGroups } from './grid'
 import { fillRoute, pagePaths, routeURL, routesFromFiles, type RouteInfo } from './routes'
 import { normalizeLiveURL, pageLabel, pluginDataWithLivePage } from './schema'
 
@@ -53,9 +54,9 @@ export function useLivePagesSource() {
   }
 
   /**
-   * One frame per route, laid out in a grid and linked to the page it shows, as one undo step. A
-   * route with a parameter is opened with the value it was given; a route still missing one is
-   * left out, since the page it names does not exist yet.
+   * One frame per route, laid out under a section for each area of the application and linked to
+   * the page it shows, as one undo step. A route with a parameter is opened with the value it was
+   * given; a route still missing one is left out, since the page it names does not exist yet.
    */
   function openAll(
     routes: readonly RouteInfo[],
@@ -66,30 +67,52 @@ export function useLivePagesSource() {
     // the page really has, or none at all.
     const address = normalizeLiveURL(base)
     if (address === '' || routes.length === 0) return 0
+    const pages = openedPages(routes, address, params)
+    if (pages.length === 0) return 0
+    const groups = groupByArea(pages, (page) => areaOf(page.path))
+    // Sections and the pages inside them come out in the order the groups do, so each group reads
+    // its own layout by the place it holds.
+    const layouts = layoutGroups(groups, { width: PAGE_WIDTH, height: PAGE_HEIGHT })
     const pageId = store.state.currentPageId
-    let index = 0
     let opened = 0
     store.undo.runBatch('Open pages', () => {
-      for (const route of routes) {
-        const path = route.params.length > 0 ? fillRoute(route.route, params) : route.route
-        if (path === null) continue
-        const url = routeURL(address, path)
-        if (url === '') continue
-        const at = gridPosition(index, PAGE_WIDTH, PAGE_HEIGHT)
-        index += 1
-        const name = path === '/' ? 'Home' : path.replace(/^\//, '')
-        const id = store.createShape('FRAME', at.x, at.y, PAGE_WIDTH, PAGE_HEIGHT, pageId, name)
-        const node = store.graph.getNode(id)
-        if (!node) continue
-        store.updateNodeWithUndo(
-          id,
-          {
-            // A route filled with a value can name a path longer than a frame's label holds.
-            pluginData: pluginDataWithLivePage(node, { url, label: pageLabel(path), mode: 'live' })
-          },
-          'Link page'
+      for (const [index, group] of groups.entries()) {
+        const layout = layouts[index]
+        const section = store.createShape(
+          'SECTION',
+          layout.section.x,
+          layout.section.y,
+          layout.section.width,
+          layout.section.height,
+          pageId,
+          group.title
         )
-        opened += 1
+        for (const placed of layout.pages) {
+          const id = store.createShape(
+            'FRAME',
+            placed.at.x,
+            placed.at.y,
+            PAGE_WIDTH,
+            PAGE_HEIGHT,
+            section,
+            placed.item.name
+          )
+          const node = store.graph.getNode(id)
+          if (!node) continue
+          store.updateNodeWithUndo(
+            id,
+            {
+              // A route filled with a value can name a path longer than a frame's label holds.
+              pluginData: pluginDataWithLivePage(node, {
+                url: placed.item.url,
+                label: pageLabel(placed.item.path),
+                mode: 'live'
+              })
+            },
+            'Link page'
+          )
+          opened += 1
+        }
       }
     })
     return opened
@@ -99,3 +122,36 @@ export function useLivePagesSource() {
 }
 
 export type LivePagesSource = ReturnType<typeof useLivePagesSource>
+
+/** One page to open: the path it serves, the address it answers on, and the name its frame takes. */
+type OpenedPage = {
+  path: string
+  url: string
+  name: string
+}
+
+/**
+ * The pages the routes serve with the values they were given. A route still missing a value it
+ * needs is left out, as is one whose address came out empty, so no frame stands for a page that
+ * cannot open.
+ */
+function openedPages(
+  routes: readonly RouteInfo[],
+  address: string,
+  params: Readonly<Record<string, string>>
+): OpenedPage[] {
+  const pages: OpenedPage[] = []
+  for (const route of routes) {
+    const path = route.params.length > 0 ? fillRoute(route.route, params) : route.route
+    if (path === null) continue
+    const url = routeURL(address, path)
+    if (url === '') continue
+    pages.push({ path, url, name: pageName(path) })
+  }
+  return pages
+}
+
+/** The name a frame takes for the path it shows: the path without its slash, Home at the root. */
+function pageName(path: string): string {
+  return path === '/' ? 'Home' : path.replace(/^\//, '')
+}
