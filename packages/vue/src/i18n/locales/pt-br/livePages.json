@@ -51,5 +51,16 @@
   "copyScreen": "Criar uma cópia",
   "copyFailed": "Não foi possível criar a cópia. Verifique se o repositório do projeto está legível.",
   "copyNoRepository": "Uma cópia precisa de um documento salvo dentro de um projeto.",
-  "editScreen": "Editar tela"
+  "editScreen": "Editar tela",
+  "connectProject": "Conectar um projeto",
+  "connectProjectHint": "Escolha uma vez a pasta da sua aplicação — o resto ela faz sozinha: encontra as páginas, inicia o servidor e dispõe as telas na tela.",
+  "connectChoosing": "Escolhendo a pasta…",
+  "connectStarting": "Iniciando a aplicação…",
+  "connectWaiting": "Aguardando o servidor de desenvolvimento…",
+  "connectOpening": "Abrindo as telas…",
+  "connectNotRepository": "Essa pasta não está dentro de um repositório git.",
+  "connectUnavailable": "Não foi possível ler a pasta.",
+  "connectNoApplication": "O projeto não tem um comando que inicie a aplicação. Defina-o na tela do projeto.",
+  "connectNoAddress": "A aplicação não informou o endereço. Inicie-a no terminal e tente novamente.",
+  "connectNoRoutes": "Nenhuma página foi encontrada neste projeto."
 }

@@ -51,5 +51,16 @@
   "copyScreen": "Eine Kopie erstellen",
   "copyFailed": "Die Kopie konnte nicht erstellt werden. Prüfe, ob das Repository des Projekts lesbar ist.",
   "copyNoRepository": "Eine Kopie braucht ein Dokument, das in einem Projekt gespeichert ist.",
-  "editScreen": "Bildschirm bearbeiten"
+  "editScreen": "Bildschirm bearbeiten",
+  "connectProject": "Projekt verbinden",
+  "connectProjectHint": "Wähle einmal den Ordner deiner Anwendung — den Rest erledigt die App: Sie findet die Seiten, startet den Dev-Server und legt die Screens auf der Fläche aus.",
+  "connectChoosing": "Ordner wird gewählt…",
+  "connectStarting": "Anwendung wird gestartet…",
+  "connectWaiting": "Warten auf den Dev-Server…",
+  "connectOpening": "Screens werden geöffnet…",
+  "connectNotRepository": "Dieser Ordner liegt in keinem Git-Repository.",
+  "connectUnavailable": "Der Ordner konnte nicht gelesen werden.",
+  "connectNoApplication": "Das Projekt hat keinen Befehl, der die Anwendung startet. Trage ihn im Projekt ein.",
+  "connectNoAddress": "Die Anwendung hat keine Adresse genannt. Starte sie im Terminal und versuche es erneut.",
+  "connectNoRoutes": "In diesem Projekt wurden keine Seiten gefunden."
 }

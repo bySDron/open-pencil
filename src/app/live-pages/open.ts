@@ -2,10 +2,11 @@ import { computed } from 'vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { readRepositoryRoot, runGit } from '@/app/integrations/git/client'
-import { normalizePath } from '@/app/projects/schema'
+import { createProject, normalizePath, type Project } from '@/app/projects/schema'
 import { useProjects } from '@/app/projects/store'
 
 import { areaOf, groupByArea } from './areas'
+import { readDocumentProject, writeDocumentProject, type DocumentProject } from './bind'
 import { layoutGroups } from './grid'
 import { fillRoute, pagePaths, routeURL, routesFromFiles, type RouteInfo } from './routes'
 import { normalizeLiveURL, pageLabel, pluginDataWithLivePage } from './schema'
@@ -15,16 +16,36 @@ export const PAGE_WIDTH = 1440
 export const PAGE_HEIGHT = 900
 
 /**
- * Where the pages of the running application come from: the project whose repository holds the
- * open document, the address its application answers on, and the routes its page files declare.
- * A document outside every project has no pages, which the panel explains instead of guessing.
+ * Where the pages of the running application come from: the project whose application the open
+ * document shows, the address its application answers on, and the routes its page files declare.
+ *
+ * The document names its project itself, so a document that was connected once keeps its screens
+ * wherever it is saved; a document that names none belongs to the project whose repository holds
+ * its file. A document outside every project has no pages, which the panel explains instead of
+ * guessing.
  */
 export function useLivePagesSource() {
   const store = useEditorStore()
   const { projects } = useProjects()
 
   const documentPath = computed(() => store.getDocumentFilePath())
-  const project = computed(() => {
+
+  /** The project the document was connected to, if it was. */
+  const binding = computed<DocumentProject | null>(() => {
+    // The binding is plugin data on the document, and the graph itself is not reactive.
+    void store.state.sceneVersion
+    return readDocumentProject(store)
+  })
+
+  const project = computed<Project | null>(() => {
+    const stored = binding.value
+    if (stored !== null) {
+      const listed = projects.value.find((entry) => entry.id === stored.projectId)
+      if (listed) return listed
+      // The list forgot the project, but the document still names its repository: the screens of
+      // that application are read from it, and nothing of it can be started.
+      return createProject({ repository: stored.repository })
+    }
     const path = documentPath.value
     if (path === null) return null
     const normalized = normalizePath(path)
@@ -34,6 +55,18 @@ export function useLivePagesSource() {
       ) ?? null
     )
   })
+
+  /**
+   * Connect the open document to a project, or disconnect it with null, as one undoable edit. A
+   * document connected here finds the screens of that application on every machine it is opened
+   * on, which is what a person picked the folder for.
+   */
+  function bind(next: Project | null): void {
+    writeDocumentProject(
+      store,
+      next === null ? null : { projectId: next.id, repository: next.repository }
+    )
+  }
 
   /** The address the project's application was configured to answer on, if any. */
   const baseAddress = computed(() => project.value?.startUrl.trim() ?? '')
@@ -118,7 +151,7 @@ export function useLivePagesSource() {
     return opened
   }
 
-  return { project, documentPath, baseAddress, listRoutes, openAll }
+  return { project, documentPath, binding, bind, baseAddress, listRoutes, openAll }
 }
 
 export type LivePagesSource = ReturnType<typeof useLivePagesSource>

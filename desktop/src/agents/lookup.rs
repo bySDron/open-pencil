@@ -15,6 +15,7 @@ const EXECUTABLES: &[&str] = &[
     "agy",
     "cursor-agent",
     "grok",
+    "dsh",
     "openpencil-mcp-http",
     "openpencil-harness",
     "npm",

@@ -12,6 +12,7 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { focusNodes } from '@/app/editor/selection/focus'
 import { listGitBranches } from '@/app/integrations/git/client'
 import { pageOrigin } from '@/app/live-pages/bridge'
+import { useScreensConnection } from '@/app/live-pages/connect'
 import {
   COPY_BRANCH_PREFIX,
   createScreenCopy,
@@ -37,13 +38,17 @@ import AppInput from '@/components/ui/input/AppInput.vue'
 
 /**
  * The pages of the running application, as a list a person reads: one row per screen, gathered
- * under the area of the address they belong to, with the one action that puts them on the canvas.
+ * under the area of the address they belong to. A document that names no project is connected in
+ * one press — pick the folder of the application — and the screens of a connected document open
+ * themselves, without a button to press first.
+ *
  * A row brings its frame into view, or opens the page the canvas lacks, and a screen can be given
  * a copy of its own: a branch beside the one a person is working on.
  */
 const store = useEditorStore()
 const messages = useLivePageMessages()
 const source = useLivePagesSource()
+const connection = useScreensConnection(source)
 const { pages } = useLivePages()
 const { stateOf } = usePageDrift()
 
@@ -53,6 +58,45 @@ const filter = ref<ScreenFilter>('all')
 const branches = shallowRef<string[]>([])
 const failure = ref('')
 const list = ref<HTMLElement | null>(null)
+
+/** Whether the document already names the project whose screens it shows. */
+const hasProject = computed(() => source.project.value !== null)
+
+/** Why the last connection produced nothing, in the panel's own words. */
+const connectFailure = computed(() => {
+  const labels = messages.value
+  switch (connection.failure.value) {
+    case 'not-repository':
+      return labels.connectNotRepository
+    case 'unavailable':
+      return labels.connectUnavailable
+    case 'no-application':
+      return labels.connectNoApplication
+    case 'no-address':
+      return labels.connectNoAddress
+    case 'no-routes':
+      return labels.connectNoRoutes
+    default:
+      return ''
+  }
+})
+
+/** What connecting is doing right now, shown in place of the button it was started from. */
+const connectPhase = computed(() => {
+  const labels = messages.value
+  switch (connection.phase.value) {
+    case 'choosing':
+      return labels.connectChoosing
+    case 'starting':
+      return labels.connectStarting
+    case 'waiting':
+      return labels.connectWaiting
+    case 'opening':
+      return labels.connectOpening
+    default:
+      return ''
+  }
+})
 
 /** The repository the copies are branches of, or null for a document outside every project. */
 const repository = computed(() => source.project.value?.repository ?? null)
@@ -114,10 +158,9 @@ const selected = computed(() => {
 })
 
 /** Why the list is empty, in the words that tell a person what to do about it. */
-const emptyText = computed(() => {
-  if (source.project.value === null) return messages.value.screensNoProject
-  return routes.value.length === 0 ? messages.value.screensNoRoutes : messages.value.screensEmpty
-})
+const emptyText = computed(() =>
+  routes.value.length === 0 ? messages.value.screensNoRoutes : messages.value.screensEmpty
+)
 
 async function loadRoutes(): Promise<void> {
   routes.value = await source.listRoutes()
@@ -134,18 +177,44 @@ async function loadBranches(): Promise<void> {
   branches.value = listed.ok ? listed.value.map((branch) => branch.name) : []
 }
 
-onMounted(() => {
-  void loadRoutes()
+/** Whether this mounting of the panel already tried to bring the screens up by itself. */
+const autoTried = ref(false)
+
+/**
+ * A document that names a project shows that application's screens by itself: the routes are read,
+ * the dev server is started when it is not up, and the frames are laid out without a press. Runs
+ * once per opening of the panel, so a person who closed the screens keeps them closed.
+ */
+async function autoShow(): Promise<void> {
+  if (autoTried.value || !hasProject.value || missing.value === 0) return
+  autoTried.value = true
+  await connection.ensure(address.value)
+}
+
+onMounted(async () => {
+  await loadRoutes()
   void loadBranches()
+  void autoShow()
 })
 // A document saved into another project answers another application, so its pages are read again.
 watch(
   () => source.project.value?.repository ?? '',
-  () => {
-    void loadRoutes()
+  async () => {
+    autoTried.value = false
+    await loadRoutes()
     void loadBranches()
+    void autoShow()
   }
 )
+
+/** The one action for a document that names no project: pick the folder and show its screens. */
+async function connect(): Promise<void> {
+  if (connection.busy.value) return
+  const connected = await connection.connect()
+  if (!connected) return
+  await loadRoutes()
+  void loadBranches()
+}
 
 /** The one action: every page the canvas is still missing, as frames of their areas. */
 function showAll(): void {
@@ -250,51 +319,97 @@ function dotStyle(screen: Screen) {
 <template>
   <div class="flex min-h-0 flex-1 flex-col" data-test-id="screens-panel">
     <div class="shrink-0 px-3 pt-2">
-      <p class="text-2xs leading-snug text-muted">{{ messages.screensHint }}</p>
-      <AppButton
-        class="mt-2 w-full"
-        size="sm"
-        color="primary"
-        variant="solid"
-        :disabled="missing === 0"
-        data-test-id="screens-show-all"
-        @click="showAll"
-      >
-        {{ messages.showAllScreens }}
-      </AppButton>
-      <AppInput
-        v-model="query"
-        type="search"
-        :placeholder="messages.screenSearch"
-        :aria-label="messages.screenSearch"
-        tone="panel"
-        size="xs"
-        class="mt-2"
-        data-test-id="screens-search"
-      />
-
-      <div class="mt-2 flex flex-wrap gap-1">
-        <button
-          v-for="chip in chips"
-          :key="chip.id"
-          type="button"
-          class="rounded-full border px-2 py-0.5 text-3xs"
-          :class="
-            filter === chip.id
-              ? 'border-accent/40 bg-accent/15 text-accent'
-              : 'border-border text-muted hover:text-surface'
-          "
-          v-test-id="`screens-filter-${chip.id}`"
-          @click="filter = chip.id"
+      <!-- A document that names no project asks for one folder, and does the rest itself. -->
+      <template v-if="!hasProject">
+        <p class="text-2xs leading-snug text-muted">{{ messages.connectProjectHint }}</p>
+        <AppButton
+          class="mt-2 w-full"
+          size="sm"
+          color="primary"
+          variant="solid"
+          :loading="connection.busy.value"
+          :disabled="connection.busy.value"
+          data-test-id="screens-connect"
+          @click="connect"
         >
-          {{ chip.label }} {{ chip.count }}
-        </button>
-      </div>
+          {{ messages.connectProject }}
+        </AppButton>
+        <p v-if="connectPhase" class="mt-1 text-2xs text-muted" data-test-id="screens-connect-phase">
+          {{ connectPhase }}
+        </p>
+        <p
+          v-if="connectFailure"
+          class="mt-1 text-2xs leading-snug text-error"
+          role="alert"
+          data-test-id="screens-connect-failure"
+        >
+          {{ connectFailure }}
+        </p>
+      </template>
 
-      <p v-if="failure" class="mt-1 text-2xs text-error" role="alert">{{ failure }}</p>
+      <template v-else>
+        <p class="text-2xs leading-snug text-muted">{{ messages.screensHint }}</p>
+        <AppButton
+          class="mt-2 w-full"
+          size="sm"
+          color="primary"
+          variant="solid"
+          :disabled="missing === 0 || connection.busy.value"
+          data-test-id="screens-show-all"
+          @click="showAll"
+        >
+          {{ messages.showAllScreens }}
+        </AppButton>
+        <p v-if="connectPhase" class="mt-1 text-2xs text-muted" data-test-id="screens-connect-phase">
+          {{ connectPhase }}
+        </p>
+        <p
+          v-if="connectFailure"
+          class="mt-1 text-2xs leading-snug text-error"
+          role="alert"
+          data-test-id="screens-connect-failure"
+        >
+          {{ connectFailure }}
+        </p>
+        <AppInput
+          v-model="query"
+          type="search"
+          :placeholder="messages.screenSearch"
+          :aria-label="messages.screenSearch"
+          tone="panel"
+          size="xs"
+          class="mt-2"
+          data-test-id="screens-search"
+        />
+
+        <div class="mt-2 flex flex-wrap gap-1">
+          <button
+            v-for="chip in chips"
+            :key="chip.id"
+            type="button"
+            class="rounded-full border px-2 py-0.5 text-3xs"
+            :class="
+              filter === chip.id
+                ? 'border-accent/40 bg-accent/15 text-accent'
+                : 'border-border text-muted hover:text-surface'
+            "
+            v-test-id="`screens-filter-${chip.id}`"
+            @click="filter = chip.id"
+          >
+            {{ chip.label }} {{ chip.count }}
+          </button>
+        </div>
+
+        <p v-if="failure" class="mt-1 text-2xs text-error" role="alert">{{ failure }}</p>
+      </template>
     </div>
 
-    <div ref="list" class="mt-1 min-h-0 flex-1 overflow-y-auto px-1 pb-2" @keydown="onKeydown">
+    <div
+      v-if="hasProject"
+      ref="list"
+      class="mt-1 min-h-0 flex-1 overflow-y-auto px-1 pb-2"
+      @keydown="onKeydown"
+    >
       <section v-for="group in groups" :key="group.area">
         <p class="px-2 pt-2 pb-1 text-3xs font-semibold tracking-wide text-muted uppercase">
           {{ group.title }}

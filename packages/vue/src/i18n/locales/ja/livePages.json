@@ -51,5 +51,16 @@
   "copyScreen": "コピーを作成",
   "copyFailed": "コピーを作成できませんでした。プロジェクトのリポジトリを読み取れるか確認してください。",
   "copyNoRepository": "コピーにはプロジェクト内に保存したドキュメントが必要です。",
-  "editScreen": "画面を編集"
+  "editScreen": "画面を編集",
+  "connectProject": "プロジェクトを接続",
+  "connectProjectHint": "アプリのフォルダーを一度選ぶだけ。ページの検出、開発サーバーの起動、画面の配置はアプリが行います。",
+  "connectChoosing": "フォルダーを選択中…",
+  "connectStarting": "アプリを起動しています…",
+  "connectWaiting": "開発サーバーを待っています…",
+  "connectOpening": "画面を開いています…",
+  "connectNotRepository": "??????????????????????????????",
+  "connectUnavailable": "フォルダーを読み取れませんでした。",
+  "connectNoApplication": "プロジェクトにアプリを起動するコマンドがありません。プロジェクト画面で設定してください。",
+  "connectNoAddress": "アプリがアドレスを知らせませんでした。ターミナルで起動してから再試行してください。",
+  "connectNoRoutes": "このプロジェクトにはページが見つかりませんでした。"
 }

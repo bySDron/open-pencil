@@ -58,7 +58,21 @@ export const livePageMessageDefaults = {
   copyScreen: 'Make a copy',
   copyFailed: 'The copy could not be made. Check that the project repository is readable.',
   copyNoRepository: 'A copy needs a document saved inside a project.',
-  editScreen: 'Edit screen'
+  editScreen: 'Edit screen',
+  connectProject: 'Connect a project',
+  connectProjectHint:
+    'Pick your application’s folder once — the app finds its pages, starts the dev server, and lays the screens out on the canvas itself.',
+  connectChoosing: 'Choosing the folder…',
+  connectStarting: 'Starting the application…',
+  connectWaiting: 'Waiting for the dev server…',
+  connectOpening: 'Opening the screens…',
+  connectNotRepository: 'That folder is not inside a git repository.',
+  connectUnavailable: 'The folder could not be read.',
+  connectNoApplication:
+    'The project has no command that starts the application. Set it on the project screen.',
+  connectNoAddress:
+    'The application did not say which address it answers on. Start it in a terminal and try again.',
+  connectNoRoutes: 'No pages were found in this project.'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

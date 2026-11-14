@@ -51,5 +51,16 @@
   "copyScreen": "Crea una copia",
   "copyFailed": "Non è stato possibile creare la copia. Controlla che il repository del progetto sia leggibile.",
   "copyNoRepository": "Una copia richiede un documento salvato in un progetto.",
-  "editScreen": "Modifica schermata"
+  "editScreen": "Modifica schermata",
+  "connectProject": "Collega un progetto",
+  "connectProjectHint": "Scegli una volta la cartella dell’applicazione: al resto pensa l’app, che trova le pagine, avvia il server e dispone le schermate sulla tela.",
+  "connectChoosing": "Scelta della cartella…",
+  "connectStarting": "Avvio dell’applicazione…",
+  "connectWaiting": "In attesa del server di sviluppo…",
+  "connectOpening": "Apertura delle schermate…",
+  "connectNotRepository": "Questa cartella non è dentro un repository git.",
+  "connectUnavailable": "Non è stato possibile leggere la cartella.",
+  "connectNoApplication": "Il progetto non ha un comando che avvia l’applicazione. Impostalo nella schermata del progetto.",
+  "connectNoAddress": "L’applicazione non ha indicato l’indirizzo. Avviala nel terminale e riprova.",
+  "connectNoRoutes": "Nessuna pagina trovata in questo progetto."
 }

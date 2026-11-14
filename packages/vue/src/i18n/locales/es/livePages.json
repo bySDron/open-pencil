@@ -51,5 +51,16 @@
   "copyScreen": "Crear una copia",
   "copyFailed": "No se pudo crear la copia. Comprueba que el repositorio del proyecto sea legible.",
   "copyNoRepository": "Una copia necesita un documento guardado dentro de un proyecto.",
-  "editScreen": "Editar pantalla"
+  "editScreen": "Editar pantalla",
+  "connectProject": "Conectar un proyecto",
+  "connectProjectHint": "Elige una vez la carpeta de tu aplicación: la app hace el resto, encuentra las páginas, arranca el servidor y coloca las pantallas en el lienzo.",
+  "connectChoosing": "Eligiendo la carpeta…",
+  "connectStarting": "Arrancando la aplicación…",
+  "connectWaiting": "Esperando al servidor de desarrollo…",
+  "connectOpening": "Abriendo las pantallas…",
+  "connectNotRepository": "Esa carpeta no está dentro de un repositorio git.",
+  "connectUnavailable": "No se pudo leer la carpeta.",
+  "connectNoApplication": "El proyecto no tiene un comando que arranque la aplicación. Indícalo en la pantalla del proyecto.",
+  "connectNoAddress": "La aplicación no indicó su dirección. Arrástrala desde una terminal e inténtalo de nuevo.",
+  "connectNoRoutes": "No se encontraron páginas en este proyecto."
 }

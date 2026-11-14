@@ -51,5 +51,16 @@
   "copyScreen": "Faire une copie",
   "copyFailed": "La copie n’a pas pu être créée. Vérifiez que le dépôt du projet est lisible.",
   "copyNoRepository": "Une copie demande un document enregistré dans un projet.",
-  "editScreen": "Modifier l’écran"
+  "editScreen": "Modifier l’écran",
+  "connectProject": "Connecter un projet",
+  "connectProjectHint": "Choisissez une fois le dossier de votre application — le reste se fait seul : l’app trouve les pages, démarre le serveur et dispose les écrans sur le canevas.",
+  "connectChoosing": "Choix du dossier…",
+  "connectStarting": "Démarrage de l’application…",
+  "connectWaiting": "Attente du serveur de développement…",
+  "connectOpening": "Ouverture des écrans…",
+  "connectNotRepository": "Ce dossier n’est pas dans un dépôt git.",
+  "connectUnavailable": "Le dossier n’a pas pu être lu.",
+  "connectNoApplication": "Le projet n’a pas de commande qui démarre l’application. Indiquez-la sur l’écran du projet.",
+  "connectNoAddress": "L’application n’a pas indiqué son adresse. Démarrez-la dans un terminal et réessayez.",
+  "connectNoRoutes": "Aucune page n’a été trouvée dans ce projet."
 }
