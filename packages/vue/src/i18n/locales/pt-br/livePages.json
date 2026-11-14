@@ -62,5 +62,16 @@
   "connectUnavailable": "Não foi possível ler a pasta.",
   "connectNoApplication": "O projeto não tem um comando que inicie a aplicação. Defina-o na tela do projeto.",
   "connectNoAddress": "A aplicação não informou o endereço. Inicie-a no terminal e tente novamente.",
-  "connectNoRoutes": "Nenhuma página foi encontrada neste projeto."
+  "connectNoRoutes": "Nenhuma página foi encontrada neste projeto.",
+  "pickElement": "Escolher um elemento",
+  "pickHint": "Clique em um elemento da tela",
+  "pickUnavailable": "Não foi possível ler a página: o app não consegue entrar em uma página de fora. No Windows isso funciona no app de desktop.",
+  "elementTitle": "Elemento da tela",
+  "elementHint": "As mudanças aparecem na hora. O botão abaixo leva elas para o código.",
+  "elementToCode": "Levar para o código",
+  "elementReset": "Restaurar",
+  "elementClear": "Limpar seleção",
+  "elementPadding": "Recuo interno",
+  "elementColor": "Cor do texto",
+  "elementBackground": "Fundo"
 }

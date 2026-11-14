@@ -5,7 +5,9 @@ import { computed, ref } from 'vue'
 import { resolveEditorProfile, type EditorProfileInputs, type EditorState } from '@open-pencil/core'
 import type { ViewportTransform } from '@open-pencil/core/geometry'
 
+import { useEditorStore } from '@/app/editor/active-store'
 import { pageOrigin, readLiveSelection } from '@/app/live-pages/bridge'
+import { isPicking, pickedElement, pickElement, stopPicking } from '@/app/live-pages/pick'
 import { layerTransform } from '@/app/live-pages/placement'
 import { useLivePageSelection } from '@/app/live-pages/selection'
 import { useLivePages } from '@/app/live-pages/use'
@@ -34,10 +36,28 @@ const {
 
 const { pages, placementOf, revisionOf } = useLivePages({ pageId: () => view.currentPageId })
 const { setSelection } = useLivePageSelection()
+const store = useEditorStore()
 const placement = computed(() => drawn ?? view)
 const transform = computed(() => layerTransform(placement.value))
 const interactive = computed(() => resolveEditorProfile(view).live !== null)
 const root = ref<HTMLElement | null>(null)
+
+/** The box a frame draw around the element its page reported, in that page's own pixels. */
+function outlineOf(nodeId: string) {
+  const current = pickedElement.value
+  return current !== null && current.nodeId === nodeId ? current.rect : null
+}
+
+/** A picked element is the frame's own selection too, so the panel on the right describes it. */
+function onPick(nodeId: string, element: Element): void {
+  store.select([nodeId])
+  pickElement(nodeId, element)
+}
+
+// Escape leaves the picking mode, as it leaves every mode the canvas puts a person in.
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && isPicking.value) stopPicking()
+})
 
 /** The origins a selection may come from: only the pages this layer shows. */
 const origins = computed(() => {
@@ -96,6 +116,9 @@ function forwardWheel(event: WheelEvent) {
         :placement="placementOf(entry)"
         :revision="revisionOf(entry.nodeId)"
         :interactive="interactive"
+        :picking="isPicking"
+        :selected="outlineOf(entry.nodeId)"
+        @pick="onPick"
       />
     </div>
   </div>

@@ -62,5 +62,16 @@
   "connectUnavailable": "تعذّرت قراءة المجلد.",
   "connectNoApplication": "لا يوجد في المشروع أمر يشغّل التطبيق. حدّده في شاشة المشروع.",
   "connectNoAddress": "لم يذكر التطبيق عنوانه. شغّله في الطرفية ثم حاول مرة أخرى.",
-  "connectNoRoutes": "لم يتم العثور على صفحات في هذا المشروع."
+  "connectNoRoutes": "لم يتم العثور على صفحات في هذا المشروع.",
+  "pickElement": "اختيار عنصر",
+  "pickHint": "انقر على عنصر في الشاشة",
+  "pickUnavailable": "تعذّرت قراءة الصفحة: لا يستطيع التطبيق الدخول إلى صفحة خارجية. على Windows يعمل هذا في تطبيق سطح المكتب.",
+  "elementTitle": "عنصر الشاشة",
+  "elementHint": "التغييرات ظاهرة فورًا. الزر أدناه ينقلها إلى الشيفرة.",
+  "elementToCode": "انقل إلى الشيفرة",
+  "elementReset": "إرجاع",
+  "elementClear": "إلغاء الاختيار",
+  "elementPadding": "الحشو",
+  "elementColor": "لون النص",
+  "elementBackground": "الخلفية"
 }

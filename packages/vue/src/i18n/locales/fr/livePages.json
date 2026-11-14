@@ -62,5 +62,16 @@
   "connectUnavailable": "Le dossier n’a pas pu être lu.",
   "connectNoApplication": "Le projet n’a pas de commande qui démarre l’application. Indiquez-la sur l’écran du projet.",
   "connectNoAddress": "L’application n’a pas indiqué son adresse. Démarrez-la dans un terminal et réessayez.",
-  "connectNoRoutes": "Aucune page n’a été trouvée dans ce projet."
+  "connectNoRoutes": "Aucune page n’a été trouvée dans ce projet.",
+  "pickElement": "Choisir un élément",
+  "pickHint": "Cliquez sur un élément de l’écran",
+  "pickUnavailable": "La page n’a pas pu être lue : l’app ne peut pas entrer dans une page étrangère. Sous Windows, cela fonctionne dans l’app de bureau.",
+  "elementTitle": "Élément de l’écran",
+  "elementHint": "Les changements sont visibles aussitôt. Le bouton ci-dessous les porte dans le code.",
+  "elementToCode": "Porter dans le code",
+  "elementReset": "Rétablir",
+  "elementClear": "Retirer la sélection",
+  "elementPadding": "Marge intérieure",
+  "elementColor": "Couleur du texte",
+  "elementBackground": "Fond"
 }

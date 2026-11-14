@@ -159,13 +159,13 @@ export function useScreensConnection(
     phase.value = 'choosing'
     const outcome = await io.chooseProject()
     if (outcome.kind !== 'added') {
-      phase.value = outcome.kind === 'cancelled' ? 'idle' : 'failed'
-      failure.value =
-        outcome.kind === 'cancelled'
-          ? 'cancelled'
-          : outcome.kind === 'notRepository'
-            ? 'not-repository'
-            : 'unavailable'
+      if (outcome.kind === 'cancelled') {
+        phase.value = 'idle'
+        failure.value = 'cancelled'
+      } else {
+        phase.value = 'failed'
+        failure.value = outcome.kind === 'notRepository' ? 'not-repository' : 'unavailable'
+      }
       return false
     }
     source.bind(outcome.project)

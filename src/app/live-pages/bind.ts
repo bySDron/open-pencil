@@ -1,3 +1,5 @@
+import * as v from 'valibot'
+
 import type { Editor } from '@open-pencil/core'
 import {
   documentProjectSchema,
@@ -5,7 +7,6 @@ import {
   OPEN_PENCIL_PLUGIN_DATA,
   withPluginData
 } from '@open-pencil/scene-graph/plugin-data'
-import * as v from 'valibot'
 
 /** The project a document belongs to, as the document keeps it. */
 export type DocumentProject = v.InferOutput<typeof documentProjectSchema>
@@ -26,10 +27,7 @@ export function readDocumentProject(editor: Pick<Editor, 'graph'>): DocumentProj
   if (!root) return null
   const stored = root.pluginData.find((entry) => isPluginDataEntry(entry, projectField))?.value
   if (stored === undefined) return null
-  const parsed = v.safeParse(
-    v.pipe(v.string(), v.parseJson(), documentProjectSchema),
-    stored
-  )
+  const parsed = v.safeParse(v.pipe(v.string(), v.parseJson(), documentProjectSchema), stored)
   return parsed.success ? parsed.output : null
 }
 

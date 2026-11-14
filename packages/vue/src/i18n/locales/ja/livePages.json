@@ -62,5 +62,16 @@
   "connectUnavailable": "フォルダーを読み取れませんでした。",
   "connectNoApplication": "プロジェクトにアプリを起動するコマンドがありません。プロジェクト画面で設定してください。",
   "connectNoAddress": "アプリがアドレスを知らせませんでした。ターミナルで起動してから再試行してください。",
-  "connectNoRoutes": "このプロジェクトにはページが見つかりませんでした。"
+  "connectNoRoutes": "このプロジェクトにはページが見つかりませんでした。",
+  "pickElement": "要素を選択",
+  "pickHint": "画面の要素をクリックします",
+  "pickUnavailable": "??????????????????????????????????????????????????",
+  "elementTitle": "画面の要素",
+  "elementHint": "変更はすぐに反映されます。下のボタンでコードに移します。",
+  "elementToCode": "コードに移す",
+  "elementReset": "元に戻す",
+  "elementClear": "選択を解除",
+  "elementPadding": "内側の余白",
+  "elementColor": "文字の色",
+  "elementBackground": "背景"
 }

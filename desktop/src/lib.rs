@@ -161,7 +161,11 @@ pub fn run() {
             }
 
             // The main window is built here rather than from the config alone, so that pages it
-            // opens with `window.open` reach the system browser.
+            // opens with `window.open` reach the system browser. The config also turns off the
+            // webview's same-origin rule: a live page is the project's dev server on another
+            // port, and its elements can only be read - and changed from the properties panel -
+            // by the document the frame holds. A frame is still whatever that server serves, so
+            // the window only ever loads a page on this machine.
             let main = app
                 .config()
                 .app

@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 
 import type { SceneNode } from '@open-pencil/scene-graph'
-import { OPEN_PENCIL_PLUGIN_DATA } from '@open-pencil/scene-graph/plugin-data'
+import { asDouble } from '@open-pencil/test-support/doubles'
 
 import {
   readDocumentProject,
@@ -12,16 +12,19 @@ import {
 
 /** A document with one root layer, which is where a document's own records live. */
 function document() {
-  const root = { id: 'root', pluginData: [] } as unknown as SceneNode
-  const edits: { nodeId: string; label: string }[] = []
-  const editor: ProjectBindingEditor = {
-    graph: { rootId: 'root', getNode: (id: string) => (id === 'root' ? root : undefined) } as never,
-    updateNodeWithUndo: (nodeId, changes, label) => {
+  const holder = { root: { id: 'root', pluginData: [] as unknown[] } }
+  const edits: { nodeId: string; label: string | undefined }[] = []
+  const editor = asDouble<ProjectBindingEditor>({
+    graph: {
+      rootId: 'root',
+      getNode: (id: string) => (id === 'root' ? asDouble<SceneNode>(holder.root) : undefined)
+    },
+    updateNodeWithUndo: (nodeId: string, changes: object, label: string | undefined) => {
       edits.push({ nodeId, label })
-      Object.assign(root as unknown as { pluginData: unknown }, changes)
+      Object.assign(holder.root, changes)
     }
-  }
-  return { editor, edits, root }
+  })
+  return { editor, edits, root: holder.root }
 }
 
 const karbid: DocumentProject = { projectId: 'project-abc', repository: 'D:/Karbid2' }
@@ -34,7 +37,7 @@ test('a connected document keeps the project it belongs to', () => {
   expect(readDocumentProject(editor)).toEqual(karbid)
   // The record lives on the document's own root, beside everything else it carries.
   const stored = (root.pluginData as { key: string }[]).map((entry) => entry.key)
-  expect(stored).toContain(OPEN_PENCIL_PLUGIN_DATA.documentProject.key)
+  expect(stored).toContain('documentProject')
 })
 
 test('disconnecting takes the record away rather than blanking it', () => {
@@ -55,11 +58,12 @@ test('a document that was never connected names no project', () => {
 
 test('a record another build wrote is not half read', () => {
   const { editor, root } = document()
-  ;(root as unknown as { pluginData: unknown[] }).pluginData = [
+  root.pluginData = [
     {
-      pluginId: OPEN_PENCIL_PLUGIN_DATA.documentProject.pluginId,
-      key: OPEN_PENCIL_PLUGIN_DATA.documentProject.key,
-      value: { projectId: '' }
+      pluginId: 'open-pencil',
+      key: 'documentProject',
+      // The value is the JSON text the writer stores; one that is not an entry reads as none.
+      value: '{"projectId":""}'
     }
   ]
 

@@ -62,5 +62,16 @@
   "connectUnavailable": "无法读取该文件夹。",
   "connectNoApplication": "项目中没有启动应用的命令。请在项目页面中填写。",
   "connectNoAddress": "应用没有说明地址。请在终端中启动后重试。",
-  "connectNoRoutes": "在此项目中未找到页面。"
+  "connectNoRoutes": "在此项目中未找到页面。",
+  "pickElement": "选择元素",
+  "pickHint": "点击屏幕中的元素",
+  "pickUnavailable": "????????????????????????????",
+  "elementTitle": "屏幕元素",
+  "elementHint": "改动立刻可见。下面的按钮把改动写进代码。",
+  "elementToCode": "写进代码",
+  "elementReset": "还原",
+  "elementClear": "取消选择",
+  "elementPadding": "内边距",
+  "elementColor": "文字颜色",
+  "elementBackground": "背景"
 }

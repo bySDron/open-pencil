@@ -62,5 +62,16 @@
   "connectUnavailable": "Der Ordner konnte nicht gelesen werden.",
   "connectNoApplication": "Das Projekt hat keinen Befehl, der die Anwendung startet. Trage ihn im Projekt ein.",
   "connectNoAddress": "Die Anwendung hat keine Adresse genannt. Starte sie im Terminal und versuche es erneut.",
-  "connectNoRoutes": "In diesem Projekt wurden keine Seiten gefunden."
+  "connectNoRoutes": "In diesem Projekt wurden keine Seiten gefunden.",
+  "pickElement": "Element auswählen",
+  "pickHint": "Klicke auf ein Element der Seite",
+  "pickUnavailable": "Die Seite konnte nicht gelesen werden: Die App darf nicht in eine fremde Seite hineinsehen. Unter Windows geht das in der Desktop-App.",
+  "elementTitle": "Element der Seite",
+  "elementHint": "Änderungen sind sofort sichtbar. Die Taste unten überträgt sie in den Code.",
+  "elementToCode": "In Code übertragen",
+  "elementReset": "Zurücksetzen",
+  "elementClear": "Auswahl aufheben",
+  "elementPadding": "Innenabstand",
+  "elementColor": "Textfarbe",
+  "elementBackground": "Hintergrund"
 }

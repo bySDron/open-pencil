@@ -1,5 +1,8 @@
 import { expect, test } from 'bun:test'
+
 import { computed } from 'vue'
+
+import { asDouble } from '@open-pencil/test-support/doubles'
 
 import { useScreensConnection, type ScreensConnectionIo } from '@/app/live-pages/connect'
 import type { LivePagesSource } from '@/app/live-pages/open'
@@ -7,8 +10,8 @@ import type { RouteInfo } from '@/app/live-pages/routes'
 import type { ProjectImportOutcome } from '@/app/projects/import'
 import { createProject, type Project } from '@/app/projects/schema'
 
-function project(repository: string, startCommand = 'vite', startUrl = ''): Project {
-  const created = createProject({ repository, startCommand, startUrl })
+function project(repository: string, startCommand = 'vite', url = ''): Project {
+  const created = createProject({ repository, startCommand, startUrl: url })
   if (created === null) throw new Error(`the fixture ${repository} must make a project`)
   return created
 }
@@ -17,20 +20,20 @@ function project(repository: string, startCommand = 'vite', startUrl = ''): Proj
 function source(target: Project | null, routes: RouteInfo[] = []) {
   const bound: (Project | null)[] = []
   const opened: { address: string; count: number }[] = []
-  const pages: LivePagesSource = {
+  const pages = asDouble<LivePagesSource>({
     project: computed(() => target),
     documentPath: computed(() => null),
     binding: computed(() => null),
     baseAddress: computed(() => target?.startUrl ?? ''),
-    bind: (next) => {
+    bind: (next: Project | null) => {
       bound.push(next)
     },
-    listRoutes: async () => routes,
-    openAll: (list, address = '') => {
+    listRoutes: async (): Promise<RouteInfo[]> => routes,
+    openAll: (list: readonly RouteInfo[], address = '') => {
       opened.push({ address, count: list.length })
       return list.length
     }
-  } as unknown as LivePagesSource
+  })
   return { pages, bound, opened }
 }
 
@@ -39,7 +42,10 @@ function routes(...paths: string[]): RouteInfo[] {
   return paths.map((path) => ({ route: path, file: `${path}.vue`, params: [] }))
 }
 
-function io(outcome: ProjectImportOutcome, answers: { address?: string; started?: Project[] } = {}) {
+function io(
+  outcome: ProjectImportOutcome,
+  answers: { address?: string; started?: Project[] } = {}
+) {
   const connection: ScreensConnectionIo = {
     chooseProject: async () => outcome,
     startApplication: async (target) => {
@@ -196,4 +202,3 @@ test('an address read from the panel is kept when the project names none', async
   expect(await connection.ensure('http://localhost:5173')).toBe(true)
   expect(opened).toEqual([{ address: 'http://localhost:5173', count: 1 }])
 })
-

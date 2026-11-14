@@ -72,7 +72,19 @@ export const livePageMessageDefaults = {
     'The project has no command that starts the application. Set it on the project screen.',
   connectNoAddress:
     'The application did not say which address it answers on. Start it in a terminal and try again.',
-  connectNoRoutes: 'No pages were found in this project.'
+  connectNoRoutes: 'No pages were found in this project.',
+  pickElement: 'Pick an element',
+  pickHint: 'Click an element on the screen',
+  pickUnavailable:
+    'The page could not be read: the app is not allowed inside a page it does not serve. This works in the desktop app on Windows.',
+  elementTitle: 'Element of the screen',
+  elementHint: 'Changes show at once. The button below takes them into the code.',
+  elementToCode: 'Take into code',
+  elementReset: 'Reset',
+  elementClear: 'Clear the pick',
+  elementPadding: 'Padding',
+  elementColor: 'Text colour',
+  elementBackground: 'Background'
 } as const
 
 export const livePageMessages = i18n('livePages', livePageMessageDefaults)

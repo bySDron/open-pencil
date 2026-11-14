@@ -82,10 +82,12 @@ function slotOf(id: string): RunSlot {
 /**
  * The run of one project, as anything outside the project's own screen reads it. A panel that
  * starts an application for its screens watches the run the project screen would show, so two
- * callers never start two applications.
+ * callers never start two applications. The listeners a run holds stay with the module that bound
+ * them, so a run is handed out by its four readable values rather than whole.
  */
 export function projectRun(id: string): ProjectRun {
-  return slotOf(id)
+  const slot = slotOf(id)
+  return { state: slot.state, output: slot.output, exitCode: slot.exitCode, failure: slot.failure }
 }
 
 /** The folder the application lives in: the repository root, or the one inside it. */
@@ -110,11 +112,7 @@ function isActive(run: ProjectRun): boolean {
   return run.state.value === 'starting' || run.state.value === 'running'
 }
 
-async function attach(
-  run: RunSlot,
-  id: string,
-  events: ProjectRunnerEvents
-): Promise<void> {
+async function attach(run: RunSlot, id: string, events: ProjectRunnerEvents): Promise<void> {
   run.detach()
   const stops: (() => void)[] = []
   // Bound before the listeners are, so a listener that fails to bind leaves nothing behind: an

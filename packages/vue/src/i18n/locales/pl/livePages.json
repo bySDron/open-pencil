@@ -62,5 +62,16 @@
   "connectUnavailable": "Nie udało się odczytać folderu.",
   "connectNoApplication": "Projekt nie ma polecenia uruchamiającego aplikację. Ustaw je na ekranie projektu.",
   "connectNoAddress": "Aplikacja nie podała adresu. Uruchom ją w terminalu i spróbuj ponownie.",
-  "connectNoRoutes": "W tym projekcie nie znaleziono stron."
+  "connectNoRoutes": "W tym projekcie nie znaleziono stron.",
+  "pickElement": "Wybierz element",
+  "pickHint": "Kliknij element na ekranie",
+  "pickUnavailable": "Nie udało się odczytać strony: aplikacja nie może wejść do cudzej strony. W systemie Windows działa to w aplikacji desktopowej.",
+  "elementTitle": "Element ekranu",
+  "elementHint": "Zmiany widać od razu. Przycisk poniżej przenosi je do kodu.",
+  "elementToCode": "Przenieś do kodu",
+  "elementReset": "Przywróć",
+  "elementClear": "Odznacz",
+  "elementPadding": "Odstęp wewnętrzny",
+  "elementColor": "Kolor tekstu",
+  "elementBackground": "Tło"
 }

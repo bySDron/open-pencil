@@ -62,5 +62,16 @@
   "connectUnavailable": "Non è stato possibile leggere la cartella.",
   "connectNoApplication": "Il progetto non ha un comando che avvia l’applicazione. Impostalo nella schermata del progetto.",
   "connectNoAddress": "L’applicazione non ha indicato l’indirizzo. Avviala nel terminale e riprova.",
-  "connectNoRoutes": "Nessuna pagina trovata in questo progetto."
+  "connectNoRoutes": "Nessuna pagina trovata in questo progetto.",
+  "pickElement": "Scegli un elemento",
+  "pickHint": "Fai clic su un elemento della schermata",
+  "pickUnavailable": "Impossibile leggere la pagina: l’app non può entrare in una pagina altrui. Su Windows funziona nell’app desktop.",
+  "elementTitle": "Elemento della schermata",
+  "elementHint": "Le modifiche si vedono subito. Il pulsante qui sotto le porta nel codice.",
+  "elementToCode": "Porta nel codice",
+  "elementReset": "Ripristina",
+  "elementClear": "Annulla selezione",
+  "elementPadding": "Spaziatura interna",
+  "elementColor": "Colore del testo",
+  "elementBackground": "Sfondo"
 }
