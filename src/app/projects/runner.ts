@@ -232,6 +232,10 @@ export async function restoreProjectRun(
     await attach(run, project.id, events)
     return true
   } catch (error) {
+    // A run that could not be bound to this window runs nothing: the next attempt has to reach the
+    // start of a run, not the middle of one that never happened.
+    run.detach()
+    run.state.value = 'idle'
     // A build without the native runner has nothing to ask; the screen stays idle.
     console.warn('[Runner] Asking for the running application failed:', error)
     return false
