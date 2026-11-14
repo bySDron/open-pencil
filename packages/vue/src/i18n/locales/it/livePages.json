@@ -89,5 +89,9 @@
   "copyChangesShow": "Mostra il diff",
   "copyChangesDiscard": "Annulla tutto",
   "copyChangesCancel": "Annulla",
-  "copyChangesRefresh": "Aggiorna"
+  "copyChangesRefresh": "Aggiorna",
+  "copyChangesBring": "Porta nel branch",
+  "copyChangesBrought": "Portato nel branch di lavoro:",
+  "copyChangesBringFailed": "Non ? stato possibile portare le modifiche.",
+  "copyChangesNothingToBring": "La copia non ha modifiche."
 }

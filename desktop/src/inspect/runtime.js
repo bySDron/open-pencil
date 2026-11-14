@@ -183,9 +183,14 @@
     return styles
   }
 
-  function pick(element) {
+  function pick(element, reveal) {
     picked = element
     mountOverlay()
+    // A person who picked from a list may be looking somewhere else on the page: the element is
+    // brought into view, which a click never needs since it was already under the pointer.
+    if (reveal && typeof element.scrollIntoView === 'function') {
+      element.scrollIntoView({ block: 'center', inline: 'center' })
+    }
     place(overlay, rectOf(element))
     send('picked', { pick: { node: describe(element, '', null, 0), styles: readStyles(element) } })
   }
@@ -274,7 +279,7 @@
         break
       case 'select': {
         const element = elements[Number(data.id)]
-        if (element) pick(element)
+        if (element) pick(element, true)
         break
       }
       case 'style':

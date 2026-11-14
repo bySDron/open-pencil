@@ -15,8 +15,6 @@ import { readInspectMessage } from '@/app/live-pages/inspect-protocol'
 
 const SOURCE = readFileSync(repoPath('desktop/src/inspect/runtime.js'), 'utf8')
 
-
-
 /** One element of the fake page. */
 function element(
   tag: string,
@@ -41,10 +39,15 @@ function element(
 
 /** A page with a box that holds a button, which is where a person clicks. */
 function page() {
+  const revealed: string[] = []
   const button = element('button', {
     classes: ['rp-button', 'wide'],
     text: 'Save',
     rect: { x: 4, y: 8, width: 120, height: 40 }
+  })
+  // A page that is longer than its viewport brings a picked element into view when asked.
+  Object.assign(button, {
+    scrollIntoView: () => revealed.push(button.tagName)
   })
   const box = element('div', { classes: ['card'], children: [button] })
   const body = element('body', { children: [box] })
@@ -84,7 +87,7 @@ function page() {
       listener(asDouble<MessageEvent>({ data: { source: 'open-pencil-host', ...request } }))
     }
   }
-  return { posted, ask }
+  return { posted, ask, revealed }
 }
 
 test('the inspector answers with the elements of the page, as the app reads them', () => {
@@ -116,6 +119,8 @@ test('selecting an element of the page answers with its node and its values', ()
   if (picked?.type !== 'picked') throw new Error('the page answered no pick')
   expect(picked.pick.node.tag).toBe('button')
   expect(picked.pick.styles.padding).toBe('16px')
+  // An element picked from a list is brought into view, since a person may be looking elsewhere.
+  expect(subject.revealed).toEqual(['BUTTON'])
 })
 
 test('a value written from the panel is answered with the values the page has now', () => {

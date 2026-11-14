@@ -89,5 +89,9 @@
   "copyChangesShow": "Voir le diff",
   "copyChangesDiscard": "Tout annuler",
   "copyChangesCancel": "Annuler",
-  "copyChangesRefresh": "Actualiser"
+  "copyChangesRefresh": "Actualiser",
+  "copyChangesBring": "Prendre dans la branche",
+  "copyChangesBrought": "Pris dans la branche de travail :",
+  "copyChangesBringFailed": "Les modifications n?ont pas pu ?tre prises.",
+  "copyChangesNothingToBring": "La copie n?a aucune modification."
 }

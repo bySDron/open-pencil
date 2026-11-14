@@ -99,6 +99,10 @@ export const livePageMessageDefaults = {
   copyChangesNone: 'Nothing has changed yet.',
   copyChangesShow: 'Show the diff',
   copyChangesDiscard: 'Discard everything',
+  copyChangesBring: 'Take into the branch',
+  copyChangesBrought: 'Taken into your working branch:',
+  copyChangesBringFailed: 'The changes could not be taken.',
+  copyChangesNothingToBring: 'The copy holds no changes.',
   copyChangesCancel: 'Cancel',
   copyChangesRefresh: 'Refresh'
 } as const

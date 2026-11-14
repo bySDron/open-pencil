@@ -498,6 +498,7 @@ function dotStyle(screen: Screen) {
           v-if="selectedCopy"
           :copy-path="selectedCopy.path"
           :branch="selectedCopy.branch"
+          :repository="repository ?? ''"
         />
         <p
           v-if="connectPhase"

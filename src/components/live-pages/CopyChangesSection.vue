@@ -5,6 +5,7 @@ import { useLivePageMessages } from '@open-pencil/vue/i18n'
 import { vTestId } from '@open-pencil/vue/testing'
 
 import {
+  bringCopyChanges,
   copyChanges,
   copyDiff,
   discardCopyChanges,
@@ -14,20 +15,26 @@ import AppButton from '@/components/ui/button/AppButton.vue'
 import IconButton from '@/components/ui/button/IconButton.vue'
 
 /**
- * What the agent changed in a screen's copy, and the one action that throws it away.
+ * What the agent changed in a screen's copy, and the two things a person can do with it.
  *
  * A copy is a branch of its own, so its work is a diff away from the branch it came from: the files
- * that changed are listed here, one of them opens as a diff, and a change nobody wants is dropped
- * before it reaches anything a person keeps.
+ * that changed are listed here, one of them opens as a diff, the work is either taken into the
+ * working tree or thrown away. Both actions ask first, since neither is one a person means twice.
  */
-const { copyPath, branch } = defineProps<{ copyPath: string; branch: string }>()
+const { copyPath, branch, repository } = defineProps<{
+  copyPath: string
+  branch: string
+  repository: string
+}>()
 
 const messages = useLivePageMessages()
 const changes = ref<CopyChange[]>([])
 const diff = ref('')
 const shown = ref('')
 const busy = ref(false)
-const asking = ref(false)
+const asking = ref<'bring' | 'discard' | null>(null)
+const outcome = ref('')
+const brought = ref(0)
 
 /** What a copy holds now, which is what an agent left there. */
 async function refresh(): Promise<void> {
@@ -37,7 +44,7 @@ async function refresh(): Promise<void> {
     changes.value = await copyChanges(copyPath)
     diff.value = ''
     shown.value = ''
-    asking.value = false
+    asking.value = null
   } finally {
     busy.value = false
   }
@@ -55,24 +62,59 @@ async function show(change: CopyChange): Promise<void> {
   }
 }
 
+/** Take the copy's work into the working tree, where a person reviews and commits it. */
+async function bring(): Promise<void> {
+  if (busy.value) return
+  busy.value = true
+  outcome.value = ''
+  try {
+    const taken = await bringCopyChanges(
+      repository,
+      copyPath,
+      branch,
+      `Take the changes of ${branch}`
+    )
+    if (taken.ok) {
+      brought.value = taken.files.length
+      outcome.value = messages.value.copyChangesBrought
+      await refresh()
+      outcome.value = messages.value.copyChangesBrought
+    } else {
+      outcome.value =
+        taken.reason === 'nothing'
+          ? messages.value.copyChangesNothingToBring
+          : messages.value.copyChangesBringFailed
+    }
+  } finally {
+    busy.value = false
+    asking.value = null
+  }
+}
+
 /** Drop every change of the copy; the press that asks is the one that runs it. */
 async function discard(): Promise<void> {
   if (busy.value) return
   busy.value = true
+  outcome.value = ''
   try {
     await discardCopyChanges(copyPath)
     await refresh()
   } finally {
     busy.value = false
+    asking.value = null
   }
 }
 
 const label = computed(() => (branch === '' ? copyPath : branch))
+const canBring = computed(() => changes.value.length > 0 && repository !== '')
 
 onMounted(refresh)
 watch(
   () => copyPath,
-  () => refresh()
+  () => {
+    outcome.value = ''
+    void refresh()
+  }
 )
 </script>
 
@@ -118,29 +160,52 @@ watch(
       data-test-id="copy-changes-diff"
       >{{ diff }}</pre>
 
-    <div v-if="changes.length > 0" class="mt-1.5">
+    <div v-if="canBring" class="mt-1.5 flex flex-wrap items-center gap-1">
       <AppButton
-        v-if="!asking"
+        v-if="asking === null"
+        size="sm"
+        variant="outline"
+        :disabled="busy"
+        data-test-id="copy-changes-bring"
+        @click="asking = 'bring'"
+      >
+        {{ messages.copyChangesBring }}
+      </AppButton>
+      <template v-else-if="asking === 'bring'">
+        <AppButton size="sm" variant="outline" :disabled="busy" @click="bring">
+          {{ messages.copyChangesBring }}
+        </AppButton>
+        <button type="button" class="text-3xs text-muted hover:text-surface" @click="asking = null">
+          {{ messages.copyChangesCancel }}
+        </button>
+      </template>
+
+      <AppButton
+        v-if="asking === null"
         size="sm"
         variant="outline"
         :disabled="busy"
         data-test-id="copy-changes-discard"
-        @click="asking = true"
+        @click="asking = 'discard'"
       >
         {{ messages.copyChangesDiscard }}
       </AppButton>
-      <div v-else class="flex items-center gap-1">
+      <template v-else-if="asking === 'discard'">
         <AppButton size="sm" variant="outline" :disabled="busy" @click="discard">
           {{ messages.copyChangesDiscard }}
         </AppButton>
-        <button
-          type="button"
-          class="text-3xs text-muted hover:text-surface"
-          @click="asking = false"
-        >
+        <button type="button" class="text-3xs text-muted hover:text-surface" @click="asking = null">
           {{ messages.copyChangesCancel }}
         </button>
-      </div>
+      </template>
     </div>
+
+    <p
+      v-if="outcome !== ''"
+      class="mt-1 text-3xs leading-snug text-muted"
+      data-test-id="copy-changes-outcome"
+    >
+      {{ outcome }} {{ outcome === messages.copyChangesBrought ? brought : '' }}
+    </p>
   </section>
 </template>

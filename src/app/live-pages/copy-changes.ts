@@ -60,3 +60,35 @@ export async function discardCopyChanges(
   const answer = await runGit(copyPath, 'checkout', ['--', '.'], transport)
   return answer.ok
 }
+
+/** Why bringing a copy's work home produced nothing a person can use. */
+export type BringFailure = 'nothing' | 'commit' | 'checkout'
+
+/** What bringing a copy's work home did: the files it took, or why it took none. */
+export type BringOutcome = { ok: true; files: string[] } | { ok: false; reason: BringFailure }
+
+/**
+ * Bring the work an agent did in a copy into the repository's working tree.
+ *
+ * A copy holds its work as uncommitted changes - the agent edits files, it does not commit - so the
+ * work is committed on the copy's branch first, and the files are then checked out of that branch
+ * into the working tree, where a person reviews and commits them like any other change. Nothing is
+ * merged and no history is rewritten: a change nobody wants stays in the copy.
+ */
+export async function bringCopyChanges(
+  repository: string,
+  copyPath: string,
+  branch: string,
+  message: string,
+  transport: GitTransport = invoke
+): Promise<BringOutcome> {
+  const changes = await copyChanges(copyPath, transport)
+  if (changes.length === 0) return { ok: false, reason: 'nothing' }
+  const staged = await runGit(copyPath, 'add', ['-A'], transport)
+  if (!staged.ok) return { ok: false, reason: 'commit' }
+  const committed = await runGit(copyPath, 'commit', ['-m', message], transport)
+  if (!committed.ok) return { ok: false, reason: 'commit' }
+  const files = changes.map((change) => change.path)
+  const taken = await runGit(repository, 'checkout', [branch, '--', ...files], transport)
+  return taken.ok ? { ok: true, files } : { ok: false, reason: 'checkout' }
+}

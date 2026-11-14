@@ -89,5 +89,9 @@
   "copyChangesShow": "Poka? diff",
   "copyChangesDiscard": "Odrzu? wszystko",
   "copyChangesCancel": "Anuluj",
-  "copyChangesRefresh": "Od?wie?"
+  "copyChangesRefresh": "Od?wie?",
+  "copyChangesBring": "We? do ga??zi",
+  "copyChangesBrought": "Wzi?to do ga??zi roboczej:",
+  "copyChangesBringFailed": "Nie uda?o si? wzi?? zmian.",
+  "copyChangesNothingToBring": "Kopia nie ma zmian."
 }
